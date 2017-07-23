@@ -24,7 +24,7 @@ Protected Class ClientConnection
 		  Dim theCONNECTPacket As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.CONNECT, Self.pConnectionSetup )
 		  
 		  // Send the packet
-		  inRawConnection.SendControlPacket theCONNECTPacket
+		  Self.SendControlPacket theCONNECTPacket
 		End Sub
 	#tag EndMethod
 
@@ -74,6 +74,14 @@ Protected Class ClientConnection
 		    RaiseEvent BrokerConnectionRejected( iNOptions.ReturnCode )
 		    
 		  End If
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub SendControlPacket(inControlPacket As MQTTLib.ControlPacket)
+		  //-- Send the control packet to the broker through the raw connection
+		   
+		  Self.pRawConnection.SendControlPacket inControlPacket
 		End Sub
 	#tag EndMethod
 
