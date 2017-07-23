@@ -63,7 +63,9 @@ Protected Class ClientConnection
 
 	#tag Method, Flags = &h21
 		Private Sub ProcessCONNACK(inOptions As MQTTLib.OptionsCONNACK)
+		  //-- Process the received CONNACK control packet
 		  
+		  // Is the connection accepted?
 		  If inOptions.ReturnCode = MQTTLib.OptionsCONNACK.kReturnCodeConnectionAccepted Then
 		    // We are connected to the MQTT broker
 		    pConnected = True
@@ -102,6 +104,8 @@ Protected Class ClientConnection
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
+			  //-- Return True is the socket adapter is connected and the broker accepted the MQQT connection
+			  
 			  Return Self.pConnected
 			End Get
 		#tag EndGetter
