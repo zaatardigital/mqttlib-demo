@@ -65,6 +65,11 @@ Inherits zd.EasyException
 			Type="String"
 		#tag EndViewProperty
 		#tag ViewProperty
+			Name="ProtocolError"
+			Group="Behavior"
+			Type="MQTTLib.Error"
+		#tag EndViewProperty
+		#tag ViewProperty
 			Name="Reason"
 			Group="Behavior"
 			Type="Text"
