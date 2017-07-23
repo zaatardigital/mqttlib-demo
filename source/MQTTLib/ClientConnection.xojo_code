@@ -152,11 +152,6 @@ Protected Class ClientConnection
 			Type="String"
 		#tag EndViewProperty
 		#tag ViewProperty
-			Name="pConnectionSetup"
-			Group="Behavior"
-			Type="Integer"
-		#tag EndViewProperty
-		#tag ViewProperty
 			Name="Super"
 			Visible=true
 			Group="ID"
