@@ -13,6 +13,22 @@ Protected Class ClientConnection
 		  AddHandler Self.pRawConnection.Connected, AddressOf Self.HandleRawConnectionConnected
 		  AddHandler Self.pRawConnection.ControlPacketReceived, AddressOf Self.HandleRawConnectionControlPacketReceived
 		  AddHandler Self.pRawConnection.Error, AddressOf Self.HandleRawConnectionError
+		  
+		  // Create the keep alive timer
+		  Self.pKeepAliveTimer = New Timer
+		  Self.pKeepAliveTimer.Period = inConnectionSetup.KeepAlive * 1000
+		  
+		  // and wire it
+		  AddHandler Self.pKeepAliveTimer.Action, AddressOf Self.HandleKeepAliveTimerAction
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub HandleKeepAliveTimerAction(inTimer As Timer)
+		  #pragma Unused inTimer
+		  
+		  // Give Me a ping, Vassily. One ping only, please.
+		  Self.SendControlPacket( New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PINGREQ ) )
 		End Sub
 	#tag EndMethod
 
@@ -48,6 +64,13 @@ Protected Class ClientConnection
 		Private Sub HandleRawConnectionError(inRawConnection As MQTTLib.RawConnection, inError As MQTTLib.Error)
 		  //-- Handles an error from the raw connection
 		  
+		  // We are no longer connected
+		  Self.pConnected = False
+		  
+		  // Deactivate the keep alive timer
+		  Self.pKeepAliveTimer.Mode = Timer.ModeOff
+		  
+		  // Signal the error to the subclass
 		  RaiseEvent Error( inError )
 		End Sub
 	#tag EndMethod
@@ -69,6 +92,10 @@ Protected Class ClientConnection
 		  If inOptions.ReturnCode = MQTTLib.OptionsCONNACK.kReturnCodeConnectionAccepted Then
 		    // We are connected to the MQTT broker
 		    pConnected = True
+		    
+		    // Starting the keep alive timer
+		    Self.pKeepAliveTimer.Mode = Timer.ModeMultiple
+		    
 		    RaiseEvent BrokerConnected( inOptions.SessionPresentFlag )
 		    
 		  Else
@@ -83,7 +110,11 @@ Protected Class ClientConnection
 		Private Sub SendControlPacket(inControlPacket As MQTTLib.ControlPacket)
 		  //-- Send the control packet to the broker through the raw connection
 		   
+		  // Send the control packet
 		  Self.pRawConnection.SendControlPacket inControlPacket
+		  
+		  // Reset the keep alive timer
+		  Self.pKeepAliveTimer.Reset
 		End Sub
 	#tag EndMethod
 
@@ -118,6 +149,10 @@ Protected Class ClientConnection
 
 	#tag Property, Flags = &h21
 		Private pConnectionSetup As MQTTLib.OptionsCONNECT
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private pKeepAliveTimer As Timer
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
