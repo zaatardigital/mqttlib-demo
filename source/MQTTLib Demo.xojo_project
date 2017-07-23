@@ -34,6 +34,7 @@ Class=RawConnection;MQTTLib/RawConnection.xojo_code;&h4194F7FF;&h2359A7FF;false
 Class=ProtocolException;MQTTLib/ProtocolException.xojo_code;&h65839FFF;&h2359A7FF;false
 Class=EasyOutOfBoundsException;zd/EasyOutOfBoundsException.xojo_code;&h5DDBF7FF;&h56359FFF;false
 Class=EasyNilObjectException;zd/EasyNilObjectException.xojo_code;&h5E2097FF;&h56359FFF;false
+Class=ClientConnection;MQTTLib/ClientConnection.xojo_code;&h7758F7FF;&h2359A7FF;false
 DefaultWindow=Window1
 AppMenuBar=MainMenuBar
 MajorVersion=1
