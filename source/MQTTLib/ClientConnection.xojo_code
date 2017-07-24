@@ -3,6 +3,13 @@ Protected Class ClientConnection
 	#tag Method, Flags = &h0
 		Sub Constructor(inSocketAdapter As MQTTLib.SocketAdapter, inConnectionSetup As MQTTLib.OptionsCONNECT)
 		  
+		  // Create the sent packet dictionary
+		  Self.pSentControlPackets = New Xojo.Core.Dictionary
+		  
+		  // and its periodic check timer
+		  Self.pPeriodicCheckTimer = New Timer
+		  AddHandler Self.pPeriodicCheckTimer.Action, AddressOf Self.HandlePeriodicCheck
+		  
 		  // Store the connection setup
 		  Self.pConnectionSetup = inConnectionSetup
 		  
@@ -29,6 +36,16 @@ Protected Class ClientConnection
 		  
 		  // Give Me a ping, Vassily. One ping only, please.
 		  Self.SendControlPacket( New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PINGREQ ) )
+		  
+		  // Store the time is was sent
+		  Self.pSentControlPackets.Value( kSentPingDictionaryKey ) = Microseconds
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub HandlePeriodicCheck(inTimer As Timer)
+		  
 		End Sub
 	#tag EndMethod
 
@@ -41,6 +58,13 @@ Protected Class ClientConnection
 		  
 		  // Send the packet
 		  Self.SendControlPacket theCONNECTPacket
+		  
+		  // Store the time it was sent
+		  Self.pSentControlPackets.Value( kCONNECTDictionaryKey ) = Microseconds
+		  
+		  // Start the periodic checker timer
+		  Self.pPeriodicCheckTimer.Mode = Timer.ModeMultiple
+		  
 		End Sub
 	#tag EndMethod
 
@@ -52,6 +76,10 @@ Protected Class ClientConnection
 		    
 		  Case MQTTLib.ControlPacket.Type.CONNACK
 		    Self.ProcessCONNACK( MQTTLib.OptionsCONNACK( inControlPacket.Options ) )
+		    
+		  Case MQTTLib.ControlPacket.Type.PINGRESP
+		    // Remove the PING from the sent packet dictionary
+		    If Self.pSentControlPackets.HasKey( kSentPingDictionaryKey ) Then Self.pSentControlPackets.Remove( kSentPingDictionaryKey )
 		    
 		  Else
 		    Break
@@ -72,6 +100,12 @@ Protected Class ClientConnection
 		  
 		  // Signal the error to the subclass
 		  RaiseEvent Error( inError )
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub HandleResponseTimeOut()
+		  
 		End Sub
 	#tag EndMethod
 
@@ -106,10 +140,27 @@ Protected Class ClientConnection
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Sub Publish(inOptions As MQTTLib.OptionsPUBLISH)
+		  // Pre conditions
+		  If inOptions Is Nil Then _
+		  Raise New zd.EasyNilObjectException( CurrentMethodName, "inOptions can't be nil." )
+		  
+		  // Create and send the control packet
+		  Dim thePacket As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBLISH, inOptions )
+		  Self.SendControlPacket thePacket
+		   
+		  // Store the packet for timeout purpose
+		  If inOptions.QoSLevel <> MQTTLib.QoS.AtMostOnceDelivery Then _
+		  Self.pSentControlPackets.Value( inOptions.PacketID ) = Xojo.Core.Date.Now.SecondsFrom1970 + Self.pControlPacketTimeToLive : thePacket
+		   
+		End Sub
+	#tag EndMethod
+
 	#tag Method, Flags = &h21
 		Private Sub SendControlPacket(inControlPacket As MQTTLib.ControlPacket)
 		  //-- Send the control packet to the broker through the raw connection
-		   
+		  
 		  // Send the control packet
 		  Self.pRawConnection.SendControlPacket inControlPacket
 		  
@@ -152,12 +203,31 @@ Protected Class ClientConnection
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
+		Private pControlPacketTimeToLive As Integer = 10
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
 		Private pKeepAliveTimer As Timer
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private pPeriodicCheckTimer As Timer
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
 		Private pRawConnection As MQTTLib.RawConnection
 	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private pSentControlPackets As Xojo.Core.Dictionary
+	#tag EndProperty
+
+
+	#tag Constant, Name = kCONNECTDictionaryKey, Type = String, Dynamic = False, Default = \"CONNECT", Scope = Private
+	#tag EndConstant
+
+	#tag Constant, Name = kSentPingDictionaryKey, Type = String, Dynamic = False, Default = \"PINGREQ", Scope = Private
+	#tag EndConstant
 
 
 	#tag ViewBehavior
