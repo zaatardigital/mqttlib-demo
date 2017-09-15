@@ -8,6 +8,12 @@ Implements ControlPacketOptions
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Function GetFixedHeaderFlagBits() As UInt8
+		  Return &b0000
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function GetRawData() As String
 		  // Return the binary data
 		  Dim theParts() As String
@@ -21,6 +27,20 @@ Implements ControlPacketOptions
 		  
 		  Return Join( theParts, "" )
 		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
+		  //-- Check if the flags are valid and raise an exception if they aren't.
+		  
+		  If inFlags <> &b0000 Then
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, Self.kInvalidFlagBitsMessage, MQTTLib.Error.InvalidFixedHeaderFlags )
+		    
+		  Else
+		    Return
+		    
+		  End If
+		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
@@ -99,6 +119,10 @@ Implements ControlPacketOptions
 	#tag Property, Flags = &h21
 		Private pReturnCodes() As MQTTLib.OptionsSUBACK.ReturnCodes
 	#tag EndProperty
+
+
+	#tag Constant, Name = kInvalidFlagBitsMessage, Type = String, Dynamic = False, Default = \"The flag bits for SUBACK packet must be &b0000", Scope = Public
+	#tag EndConstant
 
 
 	#tag Enum, Name = ReturnCodes, Type = Integer, Flags = &h0

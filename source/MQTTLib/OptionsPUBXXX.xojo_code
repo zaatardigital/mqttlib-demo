@@ -8,9 +8,21 @@ Implements ControlPacketOptions
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Function GetFixedHeaderFlagBits() As UInt8
+		  Return &b0000
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function GetRawdata() As String
 		  Return MQTTLib.GetUInt16BinaryString( Self.pPacketID )
 		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
+		  //-- This method should never be called. It MUST be overloaded in the subclass.
+		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h0

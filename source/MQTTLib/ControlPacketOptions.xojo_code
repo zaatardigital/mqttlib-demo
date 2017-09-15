@@ -1,9 +1,21 @@
 #tag Interface
 Protected Interface ControlPacketOptions
 	#tag Method, Flags = &h0
+		Function GetFixedHeaderFlagBits() As UInt8
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function GetRawdata() As String
 		  
 		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
+		  
+		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
