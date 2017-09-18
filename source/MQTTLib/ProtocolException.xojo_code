@@ -68,6 +68,28 @@ Inherits zd.EasyException
 			Name="ProtocolError"
 			Group="Behavior"
 			Type="MQTTLib.Error"
+			EditorType="Enum"
+			#tag EnumValues
+				"0 - NoError"
+				"1 - Unknown"
+				"2 - CantResolveAddress"
+				"3 - InvalidPort"
+				"4 - SelfDisconnection"
+				"5 - TimedOut"
+				"6 - LostConnection"
+				"7 - SocketInvalidState"
+				"8 - OutOfMemory"
+				"9 - AddressInUse"
+				"10 - MalformedFixedHeader"
+				"11 - UnsupportedControlPacketType"
+				"12 - ControlPacketNeedsData"
+				"13 - ControlPacketDoesntNeedData"
+				"14 - RemainingLengthExceedsMaximum"
+				"15 - CONNACKParsingError"
+				"16 - SUBACKParsingError"
+				"17 - SocketAdapterNotConnected"
+				"18 - InvalidFixedHeaderFlags"
+			#tag EndEnumValues
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Reason"

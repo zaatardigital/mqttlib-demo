@@ -249,6 +249,11 @@ Implements zd.Utils.DataStructures.PushableItem
 			InitialValue="0"
 			Type="Integer"
 		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Type"
+			Group="Behavior"
+			Type="MQTTLib.ControlPacket.Type"
+		#tag EndViewProperty
 	#tag EndViewBehavior
 End Class
 #tag EndClass
