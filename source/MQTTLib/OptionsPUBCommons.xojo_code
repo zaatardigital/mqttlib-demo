@@ -1,5 +1,5 @@
 #tag Class
-Protected Class OptionsPUBXXX
+Protected Class OptionsPUBCommons
 Implements ControlPacketOptions
 	#tag Method, Flags = &h0
 		Sub Constructor(inPacketID As UInt16 = 0)
@@ -21,7 +21,15 @@ Implements ControlPacketOptions
 
 	#tag Method, Flags = &h0
 		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
-		  //-- This method should never be called. It MUST be overloaded in the subclass.
+		  //-- Check if the flags are valid and raise an exception if they aren't.
+		  
+		  If inFlags <> &b0000 Then
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, Self.kInvalidFlagBitsMessage, MQTTLib.Error.InvalidFixedHeaderFlags )
+		    
+		  Else
+		    Return
+		    
+		  End If
 		End Sub
 	#tag EndMethod
 
@@ -44,6 +52,10 @@ Implements ControlPacketOptions
 	#tag Property, Flags = &h21
 		Private pPacketID As UInt16
 	#tag EndProperty
+
+
+	#tag Constant, Name = kInvalidFlagBitsMessage, Type = String, Dynamic = False, Default = \"The flag bits for PUBREC\x2C PUBACK and PUBCOMP packets must be &b0000", Scope = Public
+	#tag EndConstant
 
 
 	#tag ViewBehavior
