@@ -13,13 +13,7 @@ Implements zd.Utils.DataStructures.PushableItem
 	#tag Method, Flags = &h0
 		Sub Constructor(inTypeAndFlags As UInt8, inData As MemoryBlock)
 		  
-		  // Extract and set the fixed header flags
-		  Dim theFlags( 3 ) As Boolean
-		  
-		  theFlags( 0 ) = ( inTypeAndFlags And zd.Utils.Bits.kValueBit0 ) > 0
-		  theFlags( 1 ) = ( inTypeAndFlags And zd.Utils.Bits.kValueBit1 ) > 0
-		  theFlags( 2 ) = ( inTypeAndFlags And zd.Utils.Bits.kValueBit2 ) > 0
-		  theFlags( 3 ) = ( inTypeAndFlags And zd.Utils.Bits.kValueBit3 ) > 0
+		  Const kFlagsMask = &b00001111
 		  
 		  // Extract and set the packet type and prepare the data
 		  Dim thePacketType As Integer = inTypeAndFlags \ zd.Utils.Bits.kValueBit4
@@ -46,42 +40,23 @@ Implements zd.Utils.DataStructures.PushableItem
 		    
 		  Case Integer( MQTTLib.ControlPacket.Type.PUBLISH )
 		    pType = MQTTLib.ControlPacket.Type.PUBLISH
-		    Dim theOptionsPUBLISH As New MQTTLib.OptionsPUBLISH
-		    
-		    // Set the flags and the QoS
-		    theOptionsPUBLISH.RETAINFlag = theFlags( 0 )
-		    theOptionsPUBLISH.DUPFlag = theFlags( 3 )
-		    
-		    Select Case If( theFlags( 1 ), zd.Utils.Bits.kValueBit0, 0 ) + If( theFlags( 2 ), zd.Utils.Bits.kValueBit1, 0 )
-		      
-		    Case Integer( MQTTLib.QoS.AtMostOnceDelivery )
-		      theOptionsPUBLISH.QoSLevel = MQTTLib.QoS.AtMostOnceDelivery
-		      
-		    Case Integer( MQTTLib.QoS.AtLeastOnceDelivery )
-		      theOptionsPUBLISH.QoSLevel = MQTTLib.QoS.AtLeastOnceDelivery
-		      
-		    Case Integer( MQTTLib.QoS.ExactlyOnceDelivery )
-		      theOptionsPUBLISH.QoSLevel = MQTTLib.QoS.ExactlyOnceDelivery
-		      
-		    End Select
-		    
-		    Self.pPacketData = theOptionsPUBLISH
+		    Self.pPacketData = New MQTTLib.OptionsPUBLISH
 		    
 		  Case Integer( MQTTLib.ControlPacket.Type.PUBACK )
 		    pType = MQTTLib.ControlPacket.Type.PUBACK
-		    Self.pPacketData = New MQTTLib.OptionsPUBXXX
+		    Self.pPacketData = New MQTTLib.OptionsPUBACK
 		    
 		  Case Integer( MQTTLib.ControlPacket.Type.PUBREC )
 		    pType = MQTTLib.ControlPacket.Type.PUBREC
-		    Self.pPacketData = New MQTTLib.OptionsPUBXXX
+		    Self.pPacketData = New MQTTLib.OptionsPUBREC
 		    
 		  Case Integer( MQTTLib.ControlPacket.Type.PUBREL )
 		    pType = MQTTLib.ControlPacket.Type.PUBREL
-		    Self.pPacketData = New MQTTLib.OptionsPUBXXX
+		    Self.pPacketData = New MQTTLib.OptionsPUBREL
 		    
 		  Case Integer( MQTTLib.ControlPacket.Type.PUBCOMP )
 		    pType = MQTTLib.ControlPacket.Type.PUBCOMP
-		    Self.pPacketData = New MQTTLib.OptionsPUBXXX
+		    Self.pPacketData = New MQTTLib.OptionsPUBCOMP
 		    
 		  Else
 		    // Unsupported Command
@@ -91,33 +66,36 @@ Implements zd.Utils.DataStructures.PushableItem
 		    
 		  End Select
 		  
-		  // --- Checking for data inconsistencies ---
+		  Self.pPacketData.ParseFixedHeaderFlagBits Bitwise.BitAnd( inTypeAndFlags, kFlagsMask )
+		  Self.pPacketData.ParseRawData( inData )
 		  
-		  If Self.pPacketData Is Nil And Not ( inData Is Nil ) Then
-		    // The packet type has no data, but we found some
-		    Raise New MQTTLib.ProtocolException( CurrentMethodName, _
-		    "Data were parsed but the packet type (" + Str( thePacketType ) + ") doesn't need data.", _
-		    MQTTLib.Error.ControlPacketDoesntNeedData )
-		    
-		  Elseif Not( Self.pPacketData Is Nil ) Then 
-		    
-		    If  inData Is Nil Then
-		      // The packet type needs data, but none were parsed
-		      Raise New MQTTLib.ProtocolException( CurrentMethodName, _
-		      "The packet type (" + Str( thePacketType ) + ") needs data, but none were parsed", _
-		      MQTTLib.Error.ControlPacketNeedsData )
-		      
-		    Else
-		      // The packet type needs data, and we have some.
-		      // Sets it endianness
-		      inData.LittleEndian = False
-		      
-		      // And parse it
-		      Self.pPacketData.ParseRawData( inData )
-		      
-		    End If
-		    
-		  End If
+		  ' // --- Checking for data inconsistencies ---
+		  ' 
+		  ' If Self.pPacketData Is Nil And Not ( inData Is Nil ) Then
+		  ' // The packet type has no data, but we found some
+		  ' Raise New MQTTLib.ProtocolException( CurrentMethodName, _
+		  ' "Data were parsed but the packet type (" + Str( thePacketType ) + ") doesn't need data.", _
+		  ' MQTTLib.Error.ControlPacketDoesntNeedData )
+		  ' 
+		  ' Elseif Not( Self.pPacketData Is Nil ) Then 
+		  ' 
+		  ' If  inData Is Nil Then
+		  ' // The packet type needs data, but none were parsed
+		  ' Raise New MQTTLib.ProtocolException( CurrentMethodName, _
+		  ' "The packet type (" + Str( thePacketType ) + ") needs data, but none were parsed", _
+		  ' MQTTLib.Error.ControlPacketNeedsData )
+		  ' 
+		  ' Else
+		  ' // The packet type needs data, and we have some.
+		  ' // Sets it endianness
+		  ' inData.LittleEndian = False
+		  ' 
+		  ' // And parse it
+		  ' Self.pPacketData.ParseRawData( inData )
+		  ' 
+		  ' End If
+		  ' 
+		  ' End If
 		End Sub
 	#tag EndMethod
 
@@ -149,38 +127,6 @@ Implements zd.Utils.DataStructures.PushableItem
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Function Flag(inIndex As Integer) As Boolean
-		  //-- Return a fixed header flag value given its index
-		  
-		  If inIndex < 0 Or inIndex > 3 Then
-		    // inIndex is out of bounds so raise a well documented exception
-		    Raise New zd.EasyOutOfBoundsException( CurrentMethodName, "inIndex is " + Str( inIndex ) + " but there is only 4 flags (0-3) in the fixed header." )
-		    
-		  Else
-		    // Gets the value of the flag
-		    Return Self.pFixedHeaderFlags( inIndex )
-		    
-		  End If
-		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Sub Flag(inIndex As Integer, Assigns inFlag As Boolean)
-		  //-- Return a fixed header flag value given its index
-		  
-		  If inIndex < 0 Or inIndex > 3 Then
-		    // inIndex is out of bounds so raise a well documented exception
-		    Raise New zd.EasyOutOfBoundsException( CurrentMethodName, "inIndex is " + Str( inIndex ) + " but there is only 4 flags (0-3) in the fixed header." )
-		    
-		  Else
-		    // Sets the value of the flag
-		    Self.pFixedHeaderFlags( inIndex ) = inFlag
-		    
-		  End If
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
 		Function GetNextItem() As zd.Utils.DataStructures.PushableItem
 		  // Part of the zd.Utils.DataStructures.PushableItem interface.
 		  
@@ -201,11 +147,7 @@ Implements zd.Utils.DataStructures.PushableItem
 		  //-- Compute the data in the binary form
 		  
 		  // ---- Calculate the type and flags byte for the fixed header ----
-		  Dim theFirstByte As UInt8 = If( Self.pFixedHeaderFlags( 0 ), zd.Utils.Bits.kValueBit0, 0 ) _
-		  + If( Self.pFixedHeaderFlags( 1 ), zd.Utils.Bits.kValueBit1, 0 ) _
-		  + If( Self.pFixedHeaderFlags( 2 ), zd.Utils.Bits.kValueBit2, 0 ) _
-		  + If( Self.pFixedHeaderFlags( 3 ), zd.Utils.Bits.kValueBit3, 0 ) _
-		  + Integer( Self.pType ) * zd.Utils.Bits.kValueBit4
+		  Dim theFirstByte As UInt8 = Self.Options.GetFixedHeaderFlagBits + Integer( Self.pType ) * zd.Utils.Bits.kValueBit4
 		  
 		  Dim theDataSize As UInteger
 		  Dim theData As String
@@ -230,10 +172,6 @@ Implements zd.Utils.DataStructures.PushableItem
 		End Sub
 	#tag EndMethod
 
-
-	#tag Property, Flags = &h21
-		Private pFixedHeaderFlags(3) As Boolean
-	#tag EndProperty
 
 	#tag Property, Flags = &h21
 		Private pNextPushableHook As zd.Utils.DataStructures.PushableItem

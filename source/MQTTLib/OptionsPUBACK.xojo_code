@@ -1,39 +1,6 @@
 #tag Class
-Protected Class OptionsPUBXXX
-Implements ControlPacketOptions
-	#tag Method, Flags = &h0
-		Sub Constructor(inPacketID As UInt16 = 0)
-		  Self.pPacketID = inPacketID
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Function GetRawdata() As String
-		  Return MQTTLib.GetUInt16BinaryString( Self.pPacketID )
-		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Sub ParseRawData(inRawData As MemoryBlock)
-		  Self.pPacketID = inRawData.UInt16Value( 0 )
-		End Sub
-	#tag EndMethod
-
-
-	#tag ComputedProperty, Flags = &h0
-		#tag Getter
-			Get
-			  Return Self.pPacketID
-			End Get
-		#tag EndGetter
-		PacketID As UInt16
-	#tag EndComputedProperty
-
-	#tag Property, Flags = &h21
-		Private pPacketID As UInt16
-	#tag EndProperty
-
-
+Protected Class OptionsPUBACK
+Inherits MQTTLib.OptionsPUBCommons
 	#tag ViewBehavior
 		#tag ViewProperty
 			Name="Index"

@@ -2,6 +2,12 @@
 Protected Class OptionsCONNECT
 Implements ControlPacketOptions
 	#tag Method, Flags = &h0
+		Function GetFixedHeaderFlagBits() As UInt8
+		  Return &b0000
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function GetRawdata() As String
 		  //-- Build the raw data from the properties.
 		  
@@ -47,6 +53,20 @@ Implements ControlPacketOptions
 		  
 		  
 		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
+		  //-- Check if the flags are valid and raise an exception if they aren't.
+		  
+		  If inFlags <> &b0000 Then
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, Self.kInvalidFlagBitsMessage, MQTTLib.Error.InvalidFixedHeaderFlags )
+		    
+		  Else
+		    Return
+		    
+		  End If
+		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
@@ -110,6 +130,9 @@ Implements ControlPacketOptions
 		WillTopic As String
 	#tag EndProperty
 
+
+	#tag Constant, Name = kInvalidFlagBitsMessage, Type = String, Dynamic = False, Default = \"The flag bits for CONNECT packet must be &b0000", Scope = Public
+	#tag EndConstant
 
 	#tag Constant, Name = kProtocolName, Type = String, Dynamic = False, Default = \"MQTT", Scope = Public
 	#tag EndConstant

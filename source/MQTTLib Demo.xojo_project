@@ -5,7 +5,7 @@ Class=App;App.xojo_code;&h19334FFF;&h0;false
 Window=Window1;Window1.xojo_window;&h6FC0A7FF;&h0;false
 MenuBar=MainMenuBar;MainMenuBar.xojo_menu;&h28F967FF;&h0;false
 Module=MQTTLib;MQTTLib.xojo_code;&h2359A7FF;&h0;false
-Class=OptionsPUBXXX;MQTTLib/OptionsPUBXXX.xojo_code;&h53020FFF;&h2359A7FF;false
+Class=OptionsPUBCommons;MQTTLib/OptionsPUBCommons.xojo_code;&h53020FFF;&h2359A7FF;false
 BuildSteps=Build Automation;Build Automation.xojo_code;&h5A0BAFFF;&h0;false
 Class=OptionsSUBSCRIBE;MQTTLib/OptionsSUBSCRIBE.xojo_code;&h73DDBFFF;&h2359A7FF;false
 Class=Topic;MQTTLib/Topic.xojo_code;&h35AD0FFF;&h2359A7FF;false
@@ -34,7 +34,14 @@ Class=RawConnection;MQTTLib/RawConnection.xojo_code;&h4194F7FF;&h2359A7FF;false
 Class=ProtocolException;MQTTLib/ProtocolException.xojo_code;&h65839FFF;&h2359A7FF;false
 Class=EasyOutOfBoundsException;zd/EasyOutOfBoundsException.xojo_code;&h5DDBF7FF;&h56359FFF;false
 Class=EasyNilObjectException;zd/EasyNilObjectException.xojo_code;&h5E2097FF;&h56359FFF;false
+<<<<<<< HEAD
 Class=ClientConnection;MQTTLib/ClientConnection.xojo_code;&h7758F7FF;&h2359A7FF;false
+=======
+Class=OptionsPUBREL;MQTTLib/OptionsPUBREL.xojo_code;&h351CC7FF;&h2359A7FF;false
+Class=OptionsPUBACK;MQTTLib/OptionsPUBACK.xojo_code;&h49A1C7FF;&h2359A7FF;false
+Class=OptionsPUBREC;MQTTLib/OptionsPUBREC.xojo_code;&h6BDFE7FF;&h2359A7FF;false
+Class=OptionsPUBCOMP;MQTTLib/OptionsPUBCOMP.xojo_code;&h10096FFF;&h2359A7FF;false
+>>>>>>> feature/ControlPacketRefactoring
 DefaultWindow=Window1
 AppMenuBar=MainMenuBar
 MajorVersion=1
