@@ -60,7 +60,8 @@ Protected Module MQTTLib
 		  RemainingLengthExceedsMaximum
 		  CONNACKParsingError
 		  SUBACKParsingError
-		SocketAdapterNotConnected
+		  SocketAdapterNotConnected
+		InvalidFixedHeaderFlags
 	#tag EndEnum
 
 	#tag Enum, Name = QoS, Type = Integer, Flags = &h1
