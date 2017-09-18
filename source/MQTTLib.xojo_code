@@ -20,7 +20,7 @@ Protected Module MQTTLib
 	#tag EndDelegateDeclaration
 
 	#tag DelegateDeclaration, Flags = &h0
-		Delegate Sub SocketAdapterErrorDelegate(inError As MQTTLib.Error)
+		Delegate Sub SocketAdapterErrorDelegate(inError As MQTTLib . Error)
 	#tag EndDelegateDeclaration
 
 	#tag DelegateDeclaration, Flags = &h0

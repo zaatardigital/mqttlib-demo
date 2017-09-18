@@ -149,11 +149,11 @@ Protected Class ClientConnection
 		  // Create and send the control packet
 		  Dim thePacket As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBLISH, inOptions )
 		  Self.SendControlPacket thePacket
-		   
+		  
 		  // Store the packet for timeout purpose
 		  If inOptions.QoSLevel <> MQTTLib.QoS.AtMostOnceDelivery Then _
 		  Self.pSentControlPackets.Value( inOptions.PacketID ) = Xojo.Core.Date.Now.SecondsFrom1970 + Self.pControlPacketTimeToLive : thePacket
-		   
+		  
 		End Sub
 	#tag EndMethod
 
