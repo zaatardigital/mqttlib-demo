@@ -1,5 +1,35 @@
 #tag Class
 Protected Class ClientConnection
+	#tag Method, Flags = &h0
+		Sub Constructor(inSocketAdapter As MQTTLib.SocketAdapter, inConnectionSetup As MQTTLib.OptionsCONNECT)
+		  
+		  // Create the sent packet dictionary
+		  Self.pSentControlPackets = New Xojo.Core.Dictionary
+		  
+		  // and its periodic check timer
+		  Self.pPeriodicCheckTimer = New Timer
+		  AddHandler Self.pPeriodicCheckTimer.Action, AddressOf Self.HandlePeriodicCheck
+		  
+		  // Store the connection setup
+		  Self.pConnectionSetup = inConnectionSetup
+		  
+		  // Create the raw connection
+		  Self.pRawConnection = New MQTTLib.RawConnection( inSocketAdapter )
+		  
+		  // Wire its events
+		  AddHandler Self.pRawConnection.Connected, AddressOf Self.HandleRawConnectionConnected
+		  AddHandler Self.pRawConnection.ControlPacketReceived, AddressOf Self.HandleRawConnectionControlPacketReceived
+		  AddHandler Self.pRawConnection.Error, AddressOf Self.HandleRawConnectionError
+		  
+		  // Create the keep alive timer
+		  Self.pKeepAliveTimer = New Timer
+		  Self.pKeepAliveTimer.Period = inConnectionSetup.KeepAlive * 1000
+		  
+		  // and wire it
+		  AddHandler Self.pKeepAliveTimer.Action, AddressOf Self.HandleKeepAliveTimerAction
+		End Sub
+	#tag EndMethod
+
 	#tag Method, Flags = &h21
 		Private Sub HandleKeepAliveTimerAction(inTimer As Timer)
 		  #pragma Unused inTimer
