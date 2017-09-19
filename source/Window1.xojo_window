@@ -26,32 +26,72 @@ Begin Window Window1
    Title           =   "Untitled"
    Visible         =   True
    Width           =   600
+   Begin MQTTLib.ClientConnection MQTTClient
+      Index           =   -2147483648
+      LockedInPosition=   False
+      Scope           =   1
+      TabPanelIndex   =   0
+   End
+   Begin TextArea LogArea
+      AcceptTabs      =   False
+      Alignment       =   0
+      AutoDeactivate  =   True
+      AutomaticallyCheckSpelling=   True
+      BackColor       =   &cFFFFFF00
+      Bold            =   False
+      Border          =   True
+      DataField       =   ""
+      DataSource      =   ""
+      Enabled         =   True
+      Format          =   ""
+      Height          =   382
+      HelpTag         =   ""
+      HideSelection   =   True
+      Index           =   -2147483648
+      Italic          =   False
+      Left            =   20
+      LimitText       =   0
+      LineHeight      =   0.0
+      LineSpacing     =   1.0
+      LockBottom      =   True
+      LockedInPosition=   False
+      LockLeft        =   True
+      LockRight       =   True
+      LockTop         =   True
+      Mask            =   ""
+      Multiline       =   True
+      ReadOnly        =   False
+      Scope           =   2
+      ScrollbarHorizontal=   False
+      ScrollbarVertical=   True
+      Styled          =   True
+      TabIndex        =   0
+      TabPanelIndex   =   0
+      TabStop         =   True
+      Text            =   ""
+      TextColor       =   &c00000000
+      TextFont        =   "SmallSystem"
+      TextSize        =   0.0
+      TextUnit        =   0
+      Top             =   20
+      Underline       =   False
+      UseFocusRing    =   True
+      Visible         =   True
+      Width           =   560
+   End
 End
 #tag EndWindow
 
 #tag WindowCode
 	#tag Event
 		Sub Open()
-		  Dim theSocket As New TCPSocket
 		  
+		  // Setup the socket
+		  Dim theSocket As New TCPSocket
 		  theSocket.Address = "rpi.edlr"
 		  theSocket.Port = MQTTLib.kDefaultPort
 		  
-		  Self.pRawConnection = New MQTTLib.RawConnection( New MQTTLib.TCPSocketAdapter( theSocket ) )
-		  
-		  AddHandler Self.pRawConnection.Connected, AddressOf Self.HandleRawConnectionAdapterConnected
-		  AddHandler Self.pRawConnection.ControlPacketReceived, AddressOf Self.HandleRawConnectionControlPacketReceived
-		  AddHandler Self.pRawConnection.Error, AddressOf Self.HandleRawConnectionError
-		  
-		  Self.pRawConnection.Open
-		End Sub
-	#tag EndEvent
-
-
-	#tag Method, Flags = &h1
-		Protected Sub HandleRawConnectionAdapterConnected(inRawConnection As MQTTLib.RawConnection)
-		  System.DebugLog CurrentMethodName + "Sending CONNECT packet..."
-		  
+		  // Setup the connection options
 		  Dim theConnectOptions As New MQTTLib.OptionsCONNECT
 		  
 		  theConnectOptions.KeepAlive = 10
@@ -61,34 +101,31 @@ End
 		  theConnectOptions.UsernameFlag = False
 		  theConnectOptions.WillFlag = False
 		  
-		  inRawConnection.SendControlPacket( New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.CONNECT, theConnectOptions ) )
-		  
-		  
+		  Me.MQTTClient.Setup New MQTTLib.TCPSocketAdapter( theSocket ), theConnectOptions
+		  Me.MQTTClient.Open
 		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h1
-		Protected Sub HandleRawConnectionControlPacketReceived(inRawConnection As MQTTLib.RawConnection, inControlPacket As MQTTLib.ControlPacket)
-		  System.DebugLog CurrentMethodName
-		  
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h1
-		Protected Sub HandleRawConnectionError(inRawConnection As MQTTLib.RawConnection, inError As MQTTLib.Error)
-		  System.DebugLog CurrentMethodName
-		  
-		End Sub
-	#tag EndMethod
-
-
-	#tag Property, Flags = &h1
-		Protected pRawConnection As MQTTLib.RawConnection
-	#tag EndProperty
+	#tag EndEvent
 
 
 #tag EndWindowCode
 
+#tag Events MQTTClient
+	#tag Event
+		Sub BrokerConnected(inSessionPresentFlag As Boolean)
+		  Self.LogArea.AppendText "Connected to Broker. Session Present flag is " + If( inSessionPresentFlag, "True", "False" )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub BrokerConnectionRejected(inErrorCode As Integer)
+		  Break
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub Error(inError As MQTTLib.Error)
+		  Break
+		End Sub
+	#tag EndEvent
+#tag EndEvents
 #tag ViewBehavior
 	#tag ViewProperty
 		Name="BackColor"
