@@ -70,6 +70,12 @@ Protected Module MQTTLib
 		  Case MQTTLib.Error.NotConnected
 		    Return "MQTTLib.Error.NotConnected"
 		    
+		  Case MQTTLib.Error.UnknownPacketID
+		    Return "MQTTLib.Error.UnknownPacketID"
+		    
+		  Case MQTTLib.Error.UnexpectedResponseType
+		    Return "MQTTLib.Error.UnexpectedResponseType"
+		    
 		  Else
 		    Raise New zd.EasyException( CurrentMethodName, "Unimplemented case #" + Str( Integer ( inError ) ) + " for MQTTLib.Error enumeration." )
 		    
@@ -166,7 +172,9 @@ Protected Module MQTTLib
 		  InvalidFixedHeaderFlags
 		  InvalidPacketID
 		  PINGTimedOut
-		NotConnected
+		  NotConnected
+		  UnknownPacketID
+		UnexpectedResponseType
 	#tag EndEnum
 
 	#tag Enum, Name = QoS, Type = Integer, Flags = &h1

@@ -11,8 +11,8 @@ Protected Class ClientConnection
 		  Self.pKeepAliveTimer.Mode = Xojo.Core.Timer.Modes.Off
 		  
 		  // Clear the dictionaries
-		  Self.pPacketsAwaitingResponse.RemoveAll
-		  Self.pPacketsAwaitingResponseTimeout.RemoveAll
+		  Self.pPacketsAwaitingReply.RemoveAll
+		  Self.pPacketsAwaitingReplyTimeout.RemoveAll
 		End Sub
 	#tag EndMethod
 
@@ -34,8 +34,8 @@ Protected Class ClientConnection
 		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
 		  
 		  // Create the sent packet dictionary
-		  Self.pPacketsAwaitingResponse = New Xojo.Core.Dictionary
-		  Self.pPacketsAwaitingResponseTimeout = New Xojo.Core.Dictionary
+		  Self.pPacketsAwaitingReply = New Xojo.Core.Dictionary
+		  Self.pPacketsAwaitingReplyTimeout = New Xojo.Core.Dictionary
 		  
 		  // Create the keep alive timer
 		  Self.pKeepAliveTimer = New Xojo.Core.Timer
@@ -70,11 +70,11 @@ Protected Class ClientConnection
 		  // Go through all stored packet to check if they ar all still valid
 		  Dim theTime As Double = Microseconds
 		  
-		  For Each entry As Xojo.Core.DictionaryEntry In Self.pPacketsAwaitingResponseTimeout
+		  For Each entry As Xojo.Core.DictionaryEntry In Self.pPacketsAwaitingReplyTimeout
 		    
 		    If entry.Value < theTime Then
 		      // Retrieve the packet
-		      Dim thePacket As MQTTLib.ControlPacket = Self.pPacketsAwaitingResponse.Value( entry.Key )
+		      Dim thePacket As MQTTLib.ControlPacket = Self.pPacketsAwaitingReply.Value( entry.Key )
 		      Dim thePacketID As UInt16 = entry.key
 		      
 		      // We have a timed out packet
@@ -115,7 +115,7 @@ Protected Class ClientConnection
 		  Self.SendControlPacket theCONNECTPacket
 		  
 		  // Store the time it was sent
-		  Self.pPacketsAwaitingResponse.Value( kCONNECTDictionaryKey ) = Microseconds
+		  Self.pPacketsAwaitingReply.Value( kCONNECTDictionaryKey ) = Microseconds
 		  
 		  // Start the periodic checker timer
 		  Self.pPeriodicCheckTimer.Mode = Timer.ModeMultiple
@@ -146,6 +146,15 @@ Protected Class ClientConnection
 		    
 		  Case MQTTLib.ControlPacket.Type.PUBACK
 		    Self.ProcessPUBACK MQTTLib.OptionsPUBACK( inControlPacket.Options )
+		    
+		  Case MQTTLib.ControlPacket.Type.PUBCOMP
+		    Self.ProcessPUBCOMP MQTTLib.OptionsPUBCOMP( inControlPacket.Options )
+		    
+		  Case MQTTLib.ControlPacket.Type.PUBREC
+		    Self.ProcessPUBREC MQTTLib.OptionsPUBREC( inControlPacket.Options )
+		    
+		  Case MQTTLib.ControlPacket.Type.PUBREL
+		    Self.ProcessPUBREL MQTTLib.OptionsPUBREL( inControlPacket.Options )
 		    
 		  Else
 		    Self.ProcessProtocolError( CurrentMethodName, "Unsupported control packet type #" _
@@ -196,7 +205,7 @@ Protected Class ClientConnection
 		    If pPacketIDCounter = 0 Then Self.pPacketIDCounter = 1
 		    
 		    // If this packetID is already used, try the next one.
-		  Loop Until Not Self.pPacketsAwaitingResponse.HasKey( Self.pPacketIDCounter ) 
+		  Loop Until Not Self.pPacketsAwaitingReply.HasKey( Self.pPacketIDCounter ) 
 		  
 		  // Return the new unused packet
 		  Return Self.pPacketIDCounter
@@ -211,7 +220,7 @@ Protected Class ClientConnection
 		  Self.SendControlPacket( New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PINGREQ ) )
 		  
 		  // Set a delayed call for timeout
-		  Xojo.Core.Timer.CallLater( Self.pControlPacketTimeToLive, AddressOf Self.HandlePINGTimedOut )
+		  Xojo.Core.Timer.CallLater( Self.pControlPacketTimeToLive * 1000, AddressOf Self.HandlePINGTimedOut )
 		  
 		  System.DebugLog CurrentMethodName
 		End Sub
@@ -293,7 +302,7 @@ Protected Class ClientConnection
 		  End If
 		  
 		  // Remove the original packet and timeout time from the unconfirmed control packet dictionaries
-		  Self.RemovePacketAwaitingResponse( thePacketID )
+		  Self.RemovePacketAwaitingReply( thePacketID )
 		  
 		  RaiseEvent ReceivedPUBACK( thePacketID )
 		End Sub
@@ -301,7 +310,42 @@ Protected Class ClientConnection
 
 	#tag Method, Flags = &h21
 		Private Sub ProcessPUBCOMP(inPUBCOMPData As MQTTLib.OptionsPUBCOMP)
+		  //-- Process a PUBCOMP packet
 		  
+		  // Get the packet id
+		  Dim thePacketID As UInt16 = inPUBCOMPData.PacketID
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": Received a PUBCOMP with packetID #" + Str( thePacketID )
+		  
+		  // Check for zero packetID
+		  If thePacketID = 0 Then
+		    Self.ProcessProtocolError( CurrentMethodName, "A PUBCOMP's packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    Return
+		    
+		  End If
+		  
+		  // We should have a message with the same packet id in store.
+		  If Not Self.pPacketsAwaitingReply.HasKey( thePacketID ) Then
+		    Self.ProcessProtocolError( CurrentMethodName, "Unknown packet ID " + Str( thePacketID ) + " for PUBCOMP message.", MQTTLib.Error.UnknownPacketID )
+		    Return
+		    
+		  End If
+		  
+		  // Get the stored message
+		  Dim theStoredPacket As MQTTLib.ControlPacket = Self.pPacketsAwaitingReply.Value( thePacketID )
+		  
+		  // Check it's of the expected type
+		  If theStoredPacket.Type <> MQTTLib.ControlPacket.Type.PUBREL Then
+		    Self.ProcessProtocolError( CurrentMethodName, "The packet ID " + Str( thePacketID ) + " should be a PUBREL message but there is a " _
+		    + theStoredPacket.TypeString + " instead.", MQTTLib.Error.UnexpectedResponseType )
+		    Return
+		    
+		  End If
+		  
+		  // Remove the original packet and timeout time from the unconfirmed control packet dictionaries
+		  Self.RemovePacketAwaitingReply( thePacketID )
+		  
+		  RaiseEvent ReceivedPUBCOMP( thePacketID )
 		End Sub
 	#tag EndMethod
 
@@ -309,27 +353,148 @@ Protected Class ClientConnection
 		Private Sub ProcessPUBLISH(inPUBLISHData As MQTTLib.OptionsPUBLISH)
 		  //-- Process a PUBLISH control packet
 		  
+		  Dim thePacketID As UInt16 = inPUBLISHData.PacketID
+		  
 		  If MQTTLib.VerboseMode Then
 		    System.DebugLog CurrentMethodName + " PUBLISH received." + EndOfLine _
-		    + "PacketID: " + Str( inPUBLISHData.PacketID ) _
+		    + "PacketID: " + Str( thePacketID ) _
 		    + "Topic: " + inPUBLISHData.TopicName + EndOfLine _
 		    + "Message: " + inPUBLISHData.Message
 		    
 		  End If
 		  
-		  If RaiseEvent ReceivedPUBLISH( inPUBLISHData ) Then Return
+		  RaiseEvent ReceivedPUBLISH( inPUBLISHData )
+		  
+		  // Handling the response depending of the QoS
+		  
+		  Select Case inPUBLISHData.QoSLevel
+		    
+		  Case MQTTLib.QoS.AtMostOnceDelivery // QoS = 0
+		    // Nothing more to do here
+		    Return
+		    
+		  Case MQTTLib.QoS.AtLeastOnceDelivery // QoS = 1
+		    // Just send a PUBACK
+		    Self.SendControlPacket New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( thePacketID ) )
+		    
+		  Case MQTTLib.Qos.ExactlyOnceDelivery // QoS = 2
+		    // Send a PUBREC
+		    Dim thePUBREC As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREC, New MQTTLib.OptionsPUBREC( thePacketID ) )
+		    Self.SendControlPacket thePUBREC
+		    
+		    // Store the control packet for time out purpose
+		    Self.StorePacketAwaitingReply( thePacketID, thePUBREC )
+		    
+		  End Select
+		  
 		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
 		Private Sub ProcessPUBREC(inPUBRECData As MQTTLib.OptionsPUBREC)
+		  //-- Process a PUBREC packet.
+		  // it is sent by the broker after receiving a PUBLISH message with QoS = 2 (Exactly once delivery)
+		  
+		  // Get the packet id
+		  Dim thePacketID As UInt16 = inPUBRECData.PacketID
+		  
+		  // Log a message if needed
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": Received a PUBREC with packetID #" + Str( thePacketID )
+		  
+		  // --- Checking the packet validity ---
+		  
+		  // Check for zero packetID
+		  If thePacketID = 0 Then
+		    Self.ProcessProtocolError( CurrentMethodName, "A PUBREC's packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    Return
+		    
+		  End If
+		  
+		  // We should have a message with the same packet id in store.
+		  If Not Self.pPacketsAwaitingReply.HasKey( thePacketID ) Then
+		    Self.ProcessProtocolError( CurrentMethodName, "Unknown packet ID " + Str( thePacketID ) + " for PUBREC message.", MQTTLib.Error.UnknownPacketID )
+		    Return
+		    
+		  End If
+		  
+		  // Get the stored message
+		  Dim theStoredPacket As MQTTLib.ControlPacket = Self.pPacketsAwaitingReply.Value( thePacketID )
+		  
+		  // Check it's the expected type
+		  
+		  If theStoredPacket.Type <> MQTTLib.ControlPacket.Type.PUBLISH Then
+		    Self.ProcessProtocolError( CurrentMethodName, "The packet ID " + Str( thePacketID ) + " should be a PUBLISH message but there is a " _
+		    + theStoredPacket.TypeString + " instead.", MQTTLib.Error.UnexpectedResponseType )
+		    Return
+		    
+		  End If
+		  
+		  // --- Clear to process the PUBREC ---
+		  
+		  // Clear the dictionaries of this packet ID
+		  Self.RemovePacketAwaitingReply( thePacketID )
+		  
+		  // give the subclass the control
+		  RaiseEvent ReceivedPUBREC( thePacketID )
+		  
+		  // A PUBREC must be replied with a PUBREL
+		  Dim thePUBREL As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREL, New MQTTLib.OptionsPUBREL( thePacketID ) )
+		  Self.SendControlPacket thePUBREL
+		  Self.StorePacketAwaitingReply( thePacketID, thePUBREL )
 		  
 		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
 		Private Sub ProcessPUBREL(inPUBRELData As MQTTLib.OptionsPUBREL)
+		  //-- Process a PUBREL packet.
+		  // it is sent by the broker after receiving a PUBREC message when QoS = 2 (Exactly once delivery)
 		  
+		  // Get the packet id
+		  Dim thePacketID As UInt16 = inPUBRELData.PacketID
+		  
+		  // Log a message if needed
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": Received a PUBREL with packetID #" + Str( thePacketID )
+		  
+		  // --- Checking the packet validity ---
+		  
+		  // Check for zero packetID
+		  If thePacketID = 0 Then
+		    Self.ProcessProtocolError( CurrentMethodName, "A PUBREL's packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    Return
+		    
+		  End If
+		  
+		  // We should have a message with the same packet id in store.
+		  If Not Self.pPacketsAwaitingReply.HasKey( thePacketID ) Then
+		    Self.ProcessProtocolError( CurrentMethodName, "Unknown packet ID " + Str( thePacketID ) + " for PUBREL message.", MQTTLib.Error.UnknownPacketID )
+		    Return
+		    
+		  End If
+		  
+		  // Get the stored message
+		  Dim theStoredPacket As MQTTLib.ControlPacket = Self.pPacketsAwaitingReply.Value( thePacketID )
+		  
+		  // Check it's the expected type
+		  
+		  If theStoredPacket.Type <> MQTTLib.ControlPacket.Type.PUBREC Then
+		    Self.ProcessProtocolError( CurrentMethodName, "The packet ID " + Str( thePacketID ) + " should be a PUBREC message but there is a " _
+		    + theStoredPacket.TypeString + " instead.", MQTTLib.Error.UnexpectedResponseType )
+		    Return
+		    
+		  End If
+		  
+		  // --- Clear to process the PUBREC ---
+		  
+		  // Clear the dictionaries of this packet ID
+		  Self.RemovePacketAwaitingReply( thePacketID )
+		  
+		  // give the subclass the control
+		  RaiseEvent ReceivedPUBREL( thePacketID )
+		  
+		  // A PUBREL must be replied with a PUBCOMP
+		  Dim thePUBCOMP As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBCOMP, New MQTTLib.OptionsPUBCOMP( thePacketID ) )
+		  Self.SendControlPacket thePUBCOMP
 		End Sub
 	#tag EndMethod
 
@@ -350,7 +515,7 @@ Protected Class ClientConnection
 		  End If
 		  
 		  // Remove the original packet and timeout time from the unconfirmed control packet dictionaries
-		  Self.RemovePacketAwaitingResponse(thePacketID)
+		  Self.RemovePacketAwaitingReply(thePacketID)
 		  
 		  RaiseEvent ReceivedSUBACK( inSUBACKData )
 		End Sub
@@ -375,16 +540,16 @@ Protected Class ClientConnection
 		  
 		  If inOptions.QoSLevel <> MQTTLib.QoS.AtMostOnceDelivery Then
 		    // Store the packet for timeout purpose
-		    Self.StorePacketAwaitingResponse( inOptions.PacketID, thePacket )
+		    Self.StorePacketAwaitingReply( inOptions.PacketID, thePacket )
 		    
 		  End If
 		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Sub RemovePacketAwaitingResponse(inPacketID As UInt16)
-		  If Self.pPacketsAwaitingResponse.HasKey( inPacketID ) Then Self.pPacketsAwaitingResponse.Remove( inPacketID )
-		  If Self.pPacketsAwaitingResponseTimeout.HasKey( inPacketID ) Then Self.pPacketsAwaitingResponseTimeout.Remove( inPacketID )
+		Private Sub RemovePacketAwaitingReply(inPacketID As UInt16)
+		  If Self.pPacketsAwaitingReply.HasKey( inPacketID ) Then Self.pPacketsAwaitingReply.Remove( inPacketID )
+		  If Self.pPacketsAwaitingReplyTimeout.HasKey( inPacketID ) Then Self.pPacketsAwaitingReplyTimeout.Remove( inPacketID )
 		End Sub
 	#tag EndMethod
 
@@ -460,10 +625,10 @@ Protected Class ClientConnection
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Sub StorePacketAwaitingResponse(inPacketID As UInt16, inControlPacket As MQTTLib.ControlPacket)
+		Private Sub StorePacketAwaitingReply(inPacketID As UInt16, inControlPacket As MQTTLib.ControlPacket)
 		  
-		  Self.pPacketsAwaitingResponse.Value( inPacketID ) = inControlPacket
-		  Self.pPacketsAwaitingResponseTimeout.Value( inPacketID ) = Microseconds + Self.pControlPacketTimeToLive * 1000000
+		  Self.pPacketsAwaitingReply.Value( inPacketID ) = inControlPacket
+		  Self.pPacketsAwaitingReplyTimeout.Value( inPacketID ) = Microseconds + Self.pControlPacketTimeToLive * 1000000
 		End Sub
 	#tag EndMethod
 
@@ -521,7 +686,19 @@ Protected Class ClientConnection
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
-		Event ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH) As Boolean
+		Event ReceivedPUBCOMP(inPacketID As UInt16)
+	#tag EndHook
+
+	#tag Hook, Flags = &h0
+		Event ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH)
+	#tag EndHook
+
+	#tag Hook, Flags = &h0
+		Event ReceivedPUBREC(inPacketID As UInt16)
+	#tag EndHook
+
+	#tag Hook, Flags = &h0
+		Event ReceivedPUBREL(inPacketID As UInt16)
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
@@ -567,14 +744,14 @@ Protected Class ClientConnection
 		#tag Note
 			This dictionary stores the latest packet sent. The key is the packetID.
 		#tag EndNote
-		Private pPacketsAwaitingResponse As Xojo.Core.Dictionary
+		Private pPacketsAwaitingReply As Xojo.Core.Dictionary
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
 		#tag Note
 			This dictionary stores the timeout time of the latest packet sent. The key Is the packetID.
 		#tag EndNote
-		Private pPacketsAwaitingResponseTimeout As Xojo.Core.Dictionary
+		Private pPacketsAwaitingReplyTimeout As Xojo.Core.Dictionary
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
