@@ -66,36 +66,38 @@ Implements zd.Utils.DataStructures.PushableItem
 		    
 		  End Select
 		  
-		  Self.pPacketData.ParseFixedHeaderFlagBits Bitwise.BitAnd( inTypeAndFlags, kFlagsMask )
-		  Self.pPacketData.ParseRawData( inData )
-		  
-		  ' // --- Checking for data inconsistencies ---
-		  ' 
-		  ' If Self.pPacketData Is Nil And Not ( inData Is Nil ) Then
-		  ' // The packet type has no data, but we found some
-		  ' Raise New MQTTLib.ProtocolException( CurrentMethodName, _
-		  ' "Data were parsed but the packet type (" + Str( thePacketType ) + ") doesn't need data.", _
-		  ' MQTTLib.Error.ControlPacketDoesntNeedData )
-		  ' 
-		  ' Elseif Not( Self.pPacketData Is Nil ) Then 
-		  ' 
-		  ' If  inData Is Nil Then
-		  ' // The packet type needs data, but none were parsed
-		  ' Raise New MQTTLib.ProtocolException( CurrentMethodName, _
-		  ' "The packet type (" + Str( thePacketType ) + ") needs data, but none were parsed", _
-		  ' MQTTLib.Error.ControlPacketNeedsData )
-		  ' 
-		  ' Else
-		  ' // The packet type needs data, and we have some.
-		  ' // Sets it endianness
-		  ' inData.LittleEndian = False
-		  ' 
-		  ' // And parse it
+		  ' If Self.pPacketData
+		  ' Self.pPacketData.ParseFixedHeaderFlagBits Bitwise.BitAnd( inTypeAndFlags, kFlagsMask )
 		  ' Self.pPacketData.ParseRawData( inData )
-		  ' 
-		  ' End If
-		  ' 
-		  ' End If
+		  
+		  // --- Checking for data inconsistencies ---
+		  
+		  If Self.pPacketData Is Nil And Not ( inData Is Nil ) Then
+		    // The packet type has no data, but we found some
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, _
+		    "Data were parsed but the packet type (" + Str( thePacketType ) + ") doesn't need data.", _
+		    MQTTLib.Error.ControlPacketDoesntNeedData )
+		    
+		  Elseif Not( Self.pPacketData Is Nil ) Then 
+		    Self.pPacketData.ParseFixedHeaderFlagBits Bitwise.BitAnd( inTypeAndFlags, kFlagsMask )
+		    
+		    If  inData Is Nil Then
+		      // The packet type needs data, but none were parsed
+		      Raise New MQTTLib.ProtocolException( CurrentMethodName, _
+		      "The packet type (" + Str( thePacketType ) + ") needs data, but none were parsed", _
+		      MQTTLib.Error.ControlPacketNeedsData )
+		      
+		    Else
+		      // The packet type needs data, and we have some.
+		      // Sets it endianness
+		      inData.LittleEndian = False
+		      
+		      // And parse it
+		      Self.pPacketData.ParseRawData( inData )
+		      
+		    End If
+		    
+		  End If
 		End Sub
 	#tag EndMethod
 
@@ -147,7 +149,8 @@ Implements zd.Utils.DataStructures.PushableItem
 		  //-- Compute the data in the binary form
 		  
 		  // ---- Calculate the type and flags byte for the fixed header ----
-		  Dim theFirstByte As UInt8 = Self.Options.GetFixedHeaderFlagBits + Integer( Self.pType ) * zd.Utils.Bits.kValueBit4
+		  
+		  Dim theFirstByte As UInt8 = If( Self.Options Is Nil, 0, Self.Options.GetFixedHeaderFlagBits ) + Integer( Self.pType ) * zd.Utils.Bits.kValueBit4
 		  
 		  Dim theDataSize As UInteger
 		  Dim theData As String
@@ -170,6 +173,59 @@ Implements zd.Utils.DataStructures.PushableItem
 		  
 		  Self.pNextPushableHook = inNextItem
 		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function TypeString() As String
+		  Select Case Self.pType
+		    
+		  Case MQTTLib.ControlPacket.Type.CONNACK
+		    Return "CONNACK"
+		    
+		  Case MQTTLib.ControlPacket.Type.CONNECT
+		    Return "CONNECT"
+		    
+		  Case MQTTLib.ControlPacket.Type.DISCONNECT
+		    Return "DISCONNECT"
+		    
+		  Case MQTTLib.ControlPacket.Type.PINGREQ
+		    Return "PINGREQ"
+		    
+		  Case MQTTLib.ControlPacket.Type.PINGRESP
+		    Return "PINGRESP"
+		    
+		  Case MQTTLib.ControlPacket.Type.PUBACK
+		    Return "PUBACK"
+		    
+		  Case MQTTLib.ControlPacket.Type.PUBCOMP
+		    Return "PUBCOMP"
+		    
+		  Case MQTTLib.ControlPacket.Type.PUBLISH
+		    Return "PUBLISH"
+		    
+		  Case MQTTLib.ControlPacket.Type.PUBREC
+		    Return "PUBREC"
+		    
+		  Case MQTTLib.ControlPacket.Type.PUBREL
+		    Return "PUBREL"
+		    
+		  Case MQTTLib.ControlPacket.Type.SUBACK
+		    Return "SUBACK"
+		    
+		  Case MQTTLib.ControlPacket.Type.SUBSCRIBE
+		    Return "SUBSCRIBE"
+		    
+		  Case MQTTLib.ControlPacket.Type.UNSUBACK
+		    Return "UNSUBACK"
+		    
+		  Case MQTTLib.ControlPacket.Type.UNSUBSCRIBE
+		    Return "UNSUBSCRIBE"
+		    
+		  Else
+		    Raise New zd.EasyException( CurrentMethodName, "Unimplemented case #" + Str( Integer ( Self.pType ) ) + " for MQTTLib.ControlPacket.Type enumeration." )
+		    
+		  End Select
+		End Function
 	#tag EndMethod
 
 
@@ -253,6 +309,23 @@ Implements zd.Utils.DataStructures.PushableItem
 			Name="Type"
 			Group="Behavior"
 			Type="MQTTLib.ControlPacket.Type"
+			EditorType="Enum"
+			#tag EnumValues
+				"1 - CONNECT"
+				"2 - CONNACK"
+				"3 - PUBLISH"
+				"4 - PUBACK"
+				"5 - PUBREC"
+				"6 - PUBREL"
+				"7 - PUBCOMP"
+				"8 - SUBSCRIBE"
+				"9 - SUBACK"
+				"10 - UNSUBSCRIBE"
+				"11 - UNSUBACK"
+				"12 - PINGREQ"
+				"13 - PINGRESP"
+				"14 - DISCONNECT"
+			#tag EndEnumValues
 		#tag EndViewProperty
 	#tag EndViewBehavior
 End Class

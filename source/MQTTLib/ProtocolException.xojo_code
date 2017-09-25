@@ -12,19 +12,19 @@ Inherits zd.EasyException
 		  // Calling the overridden superclass constructor.
 		  Super.Constructor( inMethodName, inMessage )
 		  
-		  Self.pProtocolError = inError
+		  Self.pProtocolException = inError
 		End Sub
 	#tag EndMethod
 
 
 	#tag Property, Flags = &h21
-		Private pProtocolError As MQTTLib.Error
+		Private pProtocolException As MQTTLib.Error
 	#tag EndProperty
 
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  Return Self.pProtocolError
+			  Return Self.pProtocolException
 			End Get
 		#tag EndGetter
 		ProtocolError As MQTTLib.Error

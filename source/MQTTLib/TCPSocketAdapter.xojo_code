@@ -17,9 +17,9 @@ Implements SocketAdapter
 		  
 		  pTCPSocket = inTCPSocket
 		  
-		  AddHandler inTCPSocket.Connected, AddressOf HandleTCPSocketConnected
-		  AddHandler inTCPSocket.DataAvailable, AddressOf HandleTCPSocketIncomingData
-		  AddHandler inTCPSocket.Error, AddressOf HandleTCPSocketError
+		  AddHandler inTCPSocket.Connected, WeakAddressOf HandleTCPSocketConnected
+		  AddHandler inTCPSocket.DataAvailable, WeakAddressOf HandleTCPSocketIncomingData
+		  AddHandler inTCPSocket.Error, WeakAddressOf HandleTCPSocketError
 		End Sub
 	#tag EndMethod
 

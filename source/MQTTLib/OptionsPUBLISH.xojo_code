@@ -17,17 +17,16 @@ Implements ControlPacketOptions
 		  // The topic name preceded by its length
 		  theData.Append MQTTLib.GetMQTTRawString( Self.TopicName )
 		  
-		  // The PacketID if needed
-		  If Self.QoSLevel <> MQTTLib.QoS.AtLeastOnceDelivery Then theData.Append MQTTLib.GetUInt16BinaryString( Self.PacketID )
+		  // The PacketID if needed as a UInt16
+		  If Self.QoSLevel <> MQTTLib.QoS.AtMostOnceDelivery Then
+		    theData.Append MQTTLib.GetUInt16BinaryString( Self.PacketID )
+		    
+		  End If
 		  
 		  // The message itself
 		  theData.Append Self.Message
 		  
 		  Return Join( theData, "" )
-		  
-		  // Return MQTTLib.GetMQTTRawString( Self.TopicName ) _
-		  // + If( Self.QoSLevel <> MQTTLib.QoS.AtLeastOnceDelivery, MQTTLib.GetUInt16BinaryString( Self.PacketID ), "" ) _
-		  // + Message
 		End Function
 	#tag EndMethod
 

@@ -27,6 +27,7 @@ Begin Window Window1
    Visible         =   True
    Width           =   600
    Begin MQTTLib.ClientConnection MQTTClient
+      Connected       =   False
       Index           =   -2147483648
       LockedInPosition=   False
       Scope           =   1
@@ -44,7 +45,7 @@ Begin Window Window1
       DataSource      =   ""
       Enabled         =   True
       Format          =   ""
-      Height          =   382
+      Height          =   350
       HelpTag         =   ""
       HideSelection   =   True
       Index           =   -2147483648
@@ -60,24 +61,55 @@ Begin Window Window1
       LockTop         =   True
       Mask            =   ""
       Multiline       =   True
-      ReadOnly        =   False
+      ReadOnly        =   True
       Scope           =   2
       ScrollbarHorizontal=   False
       ScrollbarVertical=   True
-      Styled          =   True
+      Styled          =   False
       TabIndex        =   0
       TabPanelIndex   =   0
       TabStop         =   True
       Text            =   ""
       TextColor       =   &c00000000
-      TextFont        =   "SmallSystem"
+      TextFont        =   "Courier"
       TextSize        =   0.0
       TextUnit        =   0
       Top             =   20
       Underline       =   False
-      UseFocusRing    =   True
+      UseFocusRing    =   False
       Visible         =   True
       Width           =   560
+   End
+   Begin PushButton PushButton1
+      AutoDeactivate  =   True
+      Bold            =   False
+      ButtonStyle     =   "0"
+      Cancel          =   False
+      Caption         =   "Disconnect"
+      Default         =   False
+      Enabled         =   True
+      Height          =   20
+      HelpTag         =   ""
+      Index           =   -2147483648
+      InitialParent   =   ""
+      Italic          =   False
+      Left            =   500
+      LockBottom      =   True
+      LockedInPosition=   False
+      LockLeft        =   False
+      LockRight       =   True
+      LockTop         =   False
+      Scope           =   0
+      TabIndex        =   1
+      TabPanelIndex   =   0
+      TabStop         =   True
+      TextFont        =   "SmallSystem"
+      TextSize        =   0.0
+      TextUnit        =   0
+      Top             =   382
+      Underline       =   False
+      Visible         =   True
+      Width           =   80
    End
 End
 #tag EndWindow
@@ -85,6 +117,8 @@ End
 #tag WindowCode
 	#tag Event
 		Sub Open()
+		  // set the verbose mode
+		  MQTTLib.VerboseMode = True
 		  
 		  // Setup the socket
 		  Dim theSocket As New TCPSocket
@@ -102,9 +136,28 @@ End
 		  theConnectOptions.WillFlag = False
 		  
 		  Me.MQTTClient.Setup New MQTTLib.TCPSocketAdapter( theSocket ), theConnectOptions
-		  Me.MQTTClient.Open
+		  Me.MQTTClient.Connect
 		End Sub
 	#tag EndEvent
+
+
+	#tag Method, Flags = &h21
+		Private Sub Log(inLogMessage As String = "")
+		  Self.LogArea.AppendText Xojo.Core.Date.Now.ToText + " - " + inLogMessage + EndOfLine
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h21
+		Private Sub SendMessage()
+		  Dim theMessage As New MQTTLib.OptionsPUBLISH
+		  
+		  theMessage.Message = "Hello World - " + Xojo.Core.Date.Now.ToText
+		  theMessage.TopicName = "zd/Test"
+		  theMessage.QoSLevel = MQTTLib.QoS.AtLeastOnceDelivery
+		  
+		  Self.MQTTClient.Publish theMessage
+		End Sub
+	#tag EndMethod
 
 
 #tag EndWindowCode
@@ -112,17 +165,31 @@ End
 #tag Events MQTTClient
 	#tag Event
 		Sub BrokerConnected(inSessionPresentFlag As Boolean)
-		  Self.LogArea.AppendText "Connected to Broker. Session Present flag is " + If( inSessionPresentFlag, "True", "False" )
+		  Self.Log "Connected to Broker. Session Present flag is " + If( inSessionPresentFlag, "True", "False" )
+		  
+		  Xojo.Core.Timer.CallLater( 1000, WeakAddressOf Self.SendMessage )
 		End Sub
 	#tag EndEvent
 	#tag Event
 		Sub BrokerConnectionRejected(inErrorCode As Integer)
-		  Break
+		  Self.Log "Connection Rejected - " + Str( Integer( inErrorCode ) )
 		End Sub
 	#tag EndEvent
 	#tag Event
-		Sub Error(inError As MQTTLib.Error)
-		  Break
+		Sub Error(inMessage As String, inError As MQTTLib.Error)
+		  Self.Log inMessage + " - " + MQTTLib.ErrorToString( inError )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPINGRESP()
+		  Self.Log "PINGRESP received"
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+#tag Events PushButton1
+	#tag Event
+		Sub Action()
+		  Self.MQTTClient.Disconnect
 		End Sub
 	#tag EndEvent
 #tag EndEvents
