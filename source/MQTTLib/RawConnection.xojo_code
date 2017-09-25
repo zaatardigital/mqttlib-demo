@@ -17,9 +17,9 @@ Protected Class RawConnection
 		  
 		  // A bit of wiring
 		  inSocketAdapter.RegisterDelegates( _
-		  AddressOf Self.HandleSocketAdapterConnected, _
-		  AddressOf Self.HandleSocketAdapterNewData, _
-		  AddressOf Self.HandleSocketAdapterError )
+		  WeakAddressOf Self.HandleSocketAdapterConnected, _
+		  WeakAddressOf Self.HandleSocketAdapterNewData, _
+		  WeakAddressOf Self.HandleSocketAdapterError )
 		End Sub
 	#tag EndMethod
 
@@ -36,25 +36,16 @@ Protected Class RawConnection
 		Private Sub HandleSocketAdapterError(inError AS MQTTLib.Error)
 		  //-- There was an error with the socket adapter
 		  
+		  Dim theMessage As String = "Socket adapter error #" + Str( Integer( inError ) ) + "." 
+		  
+		  // In verbose mode, all errors are logged
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": " + theMessage
+		  
 		  // Error always means disconnection
 		  Self.pConnected =  False
 		  
-		  Dim theError As MQTTLib.Error
-		  
-		  // Was the connection closed after a protocol error?
-		  If Self.pProtocolError <> MQTTLib.Error.NoError And inError = MQTTLib.Error.LostConnection Then
-		    // Yes, grab the protocol error and reset it cache
-		    theError = Self.pProtocolError
-		    Self.pProtocolError = MQTTLib.Error.NoError
-		    
-		  Else
-		    // This a socket adapter error
-		    theError = inError
-		    
-		  End If
-		  
 		  // Signal the subclass
-		  RaiseEvent Error( theError )
+		  RaiseEvent Error( theMessage, inError )
 		End Sub
 	#tag EndMethod
 
@@ -105,9 +96,8 @@ Protected Class RawConnection
 		      
 		      // Check for error
 		      If theMultiplier > zd.Utils.Bits.kValueBit7^3 Then
-		        // The fixed header is malformed, close the connection
-		        Self.pProtocolError = MQTTLib.Error.MalformedFixedHeader
-		        Self.Close()
+		        // The fixed header is malformed, trigger a protocol error
+		        Self.ProcessProtocolError( CurrentMethodName, "Malformed fixed header",  MQTTLib.Error.MalformedFixedHeader )
 		        Return
 		        
 		      End If
@@ -137,9 +127,8 @@ Protected Class RawConnection
 		      
 		    Catch e As MQTTLib.ProtocolException
 		      // There was a problem when creating the ControlPacket
-		      // Store the protocol error
-		      Self.pProtocolError = e.ProtocolError
-		      Self.Close()
+		      Self.ProcessProtocolError( CurrentMethodName, e.Message, e.ProtocolError )
+		      Return
 		      
 		    End Try
 		    
@@ -186,14 +175,33 @@ Protected Class RawConnection
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h21
+		Private Sub ProcessProtocolError(inMethodName As String, inMessage As String, inError As MQTTLib.Error)
+		  //-- Process a protocol error
+		  
+		  // In verbose mode, all errors are logged
+		  If MQTTLib.VerboseMode Then _
+		  System.DebugLog inMethodName + ": " + inMessage + " *-* (#" + Str( Integer( inError ) ) + ")." 
+		  
+		  // A protocol error means the connection has to be closed.
+		  // This will trigger a lost connection socket error
+		  If Not ( Self.pSocketAdapter Is Nil ) Then Self.pSocketAdapter.Disconnect
+		  
+		  // Raise a well documented error event
+		  RaiseEvent Error( inMessage, inError )
+		End Sub
+	#tag EndMethod
+
 	#tag Method, Flags = &h0
 		Sub SendControlPacket(inPacket As MQTTLib.ControlPacket)
 		  //-- Send the packet to the broker
 		  
 		  // --- Check the session state ---
-		  If Not Self.Connected Then _
-		  Raise New MQTTLib.ProtocolException( CurrentMethodName, "The socket adapter is not connected.", _
-		  MQTTLib.Error.SocketAdapterNotConnected )
+		  If Not Self.Connected Then
+		    Self.ProcessProtocolError( CurrentMethodName, "The socket adapter is not connected.", MQTTLib.Error.SocketAdapterNotConnected )
+		    Return
+		    
+		  End If
 		  
 		  // We're clear to send
 		  Self.pSocketAdapter.SendControlPacket inPacket
@@ -210,7 +218,7 @@ Protected Class RawConnection
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
-		Event Error(inError As MQTTLib.Error)
+		Event Error(inMessage As String, inError As MQTTLib.Error)
 	#tag EndHook
 
 
@@ -233,10 +241,6 @@ Protected Class RawConnection
 
 	#tag Property, Flags = &h21
 		Private pDisconnecting As Boolean
-	#tag EndProperty
-
-	#tag Property, Flags = &h21
-		Private pProtocolError As MQTTLib.Error = MQTTLib.Error.NoError
 	#tag EndProperty
 
 	#tag Property, Flags = &h21

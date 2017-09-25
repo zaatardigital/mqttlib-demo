@@ -2,6 +2,14 @@
 Protected Class OptionsPUBLISH
 Implements ControlPacketOptions
 	#tag Method, Flags = &h0
+		Function GetFixedHeaderFlagBits() As UInt8
+		  Return If( Self.RETAINFlag, zd.Utils.Bits.kValueBit0, 0 ) _
+		  + Integer( Self.QoSLevel ) * zd.Utils.Bits.kValueBit1 _
+		  + If( Self.DUPFlag, zd.Utils.Bits.kValueBit3, 0 ) 
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function GetRawdata() As String
 		  // Build the raw data string
 		  Dim theData() As String
@@ -9,18 +17,54 @@ Implements ControlPacketOptions
 		  // The topic name preceded by its length
 		  theData.Append MQTTLib.GetMQTTRawString( Self.TopicName )
 		  
-		  // The PacketID if needed
-		  If Self.QoSLevel <> MQTTLib.QoS.AtLeastOnceDelivery Then theData.Append MQTTLib.GetUInt16BinaryString( Self.PacketID )
+		  // The PacketID if needed as a UInt16
+		  If Self.QoSLevel <> MQTTLib.QoS.AtMostOnceDelivery Then
+		    theData.Append MQTTLib.GetUInt16BinaryString( Self.PacketID )
+		    
+		  End If
 		  
 		  // The message itself
 		  theData.Append Self.Message
 		  
 		  Return Join( theData, "" )
-		  
-		  // Return MQTTLib.GetMQTTRawString( Self.TopicName ) _
-		  // + If( Self.QoSLevel <> MQTTLib.QoS.AtLeastOnceDelivery, MQTTLib.GetUInt16BinaryString( Self.PacketID ), "" ) _
-		  // + Message
 		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
+		  //-- Check if the flags are valid and raise an exception if they aren't.
+		  
+		  // Set the flags... and the QoS
+		  Self.RETAINFlag = ( inFlags And zd.Utils.Bits.kValueBit0 ) > 0
+		  Self.DUPFlag = ( inFlags And zd.Utils.Bits.kValueBit3 ) > 0
+		  
+		  // Extract and shift the QoS bits
+		  Dim theQoS As UInt8 _
+		  = If( ( inFlags And zd.Utils.Bits.kValueBit1 ) > 0, zd.Utils.Bits.kValueBit0, 0 ) _
+		  + If( ( inFlags And zd.Utils.Bits.kValueBit2 ) > 0, zd.Utils.Bits.kValueBit1, 0 )
+		  
+		  Select Case theQoS
+		    
+		  Case Integer( MQTTLib.QoS.AtMostOnceDelivery ) // QoS = 0
+		    Self.QoSLevel = MQTTLib.QoS.AtMostOnceDelivery
+		    
+		    // DUP flag must be false for this QoS
+		    If Self.DUPFlag Then
+		      Raise New MQTTLib.ProtocolException( CurrentMethodName, Self.kInvalidDUPFlagErrorMessage, MQTTLib.Error.InvalidFixedHeaderFlags )
+		      
+		    End If
+		    
+		  Case Integer( MQTTLib.QoS.AtLeastOnceDelivery ) // QoS = 1
+		    Self.QoSLevel = MQTTLib.QoS.AtLeastOnceDelivery
+		    
+		  Case Integer( MQTTLib.QoS.ExactlyOnceDelivery )
+		    Self.QoSLevel = MQTTLib.QoS.ExactlyOnceDelivery // QoS = 2
+		    
+		  Else // QoS = 3 -> Invalid
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, Self.kInvalidQoSValueMessage, MQTTLib.Error.InvalidFixedHeaderFlags )
+		    
+		  End Select
+		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
@@ -80,6 +124,13 @@ Implements ControlPacketOptions
 	#tag Property, Flags = &h0
 		TopicName As String
 	#tag EndProperty
+
+
+	#tag Constant, Name = kInvalidDUPFlagErrorMessage, Type = String, Dynamic = False, Default = \"The DUP Flag MUST not be set when QoS \x3D 0", Scope = Public
+	#tag EndConstant
+
+	#tag Constant, Name = kInvalidQoSValueMessage, Type = String, Dynamic = False, Default = \"Invalid QoS value.", Scope = Public
+	#tag EndConstant
 
 
 	#tag ViewBehavior

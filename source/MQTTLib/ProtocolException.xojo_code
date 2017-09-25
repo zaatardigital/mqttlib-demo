@@ -12,19 +12,19 @@ Inherits zd.EasyException
 		  // Calling the overridden superclass constructor.
 		  Super.Constructor( inMethodName, inMessage )
 		  
-		  Self.pProtocolError = inError
+		  Self.pProtocolException = inError
 		End Sub
 	#tag EndMethod
 
 
 	#tag Property, Flags = &h21
-		Private pProtocolError As MQTTLib.Error
+		Private pProtocolException As MQTTLib.Error
 	#tag EndProperty
 
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  Return Self.pProtocolError
+			  Return Self.pProtocolException
 			End Get
 		#tag EndGetter
 		ProtocolError As MQTTLib.Error
@@ -68,6 +68,31 @@ Inherits zd.EasyException
 			Name="ProtocolError"
 			Group="Behavior"
 			Type="MQTTLib.Error"
+			EditorType="Enum"
+			#tag EnumValues
+				"0 - NoError"
+				"1 - Unknown"
+				"2 - CantResolveAddress"
+				"3 - InvalidPort"
+				"4 - SelfDisconnection"
+				"5 - TimedOut"
+				"6 - LostConnection"
+				"7 - SocketInvalidState"
+				"8 - OutOfMemory"
+				"9 - AddressInUse"
+				"10 - MalformedFixedHeader"
+				"11 - UnsupportedControlPacketType"
+				"12 - ControlPacketNeedsData"
+				"13 - ControlPacketDoesntNeedData"
+				"14 - RemainingLengthExceedsMaximum"
+				"15 - CONNACKParsingError"
+				"16 - SUBACKParsingError"
+				"17 - SocketAdapterNotConnected"
+				"18 - InvalidFixedHeaderFlags"
+				"19 - InvalidPacketID"
+				"20 - PINGTimedOut"
+				"21 - NotConnected"
+			#tag EndEnumValues
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Reason"

@@ -26,69 +26,221 @@ Begin Window Window1
    Title           =   "Untitled"
    Visible         =   True
    Width           =   600
+   Begin MQTTLib.ClientConnection MQTTClient
+      Connected       =   False
+      Index           =   -2147483648
+      LockedInPosition=   False
+      Scope           =   1
+      TabPanelIndex   =   0
+   End
+   Begin TextArea LogArea
+      AcceptTabs      =   False
+      Alignment       =   0
+      AutoDeactivate  =   True
+      AutomaticallyCheckSpelling=   True
+      BackColor       =   &cFFFFFF00
+      Bold            =   False
+      Border          =   True
+      DataField       =   ""
+      DataSource      =   ""
+      Enabled         =   True
+      Format          =   ""
+      Height          =   350
+      HelpTag         =   ""
+      HideSelection   =   True
+      Index           =   -2147483648
+      Italic          =   False
+      Left            =   20
+      LimitText       =   0
+      LineHeight      =   0.0
+      LineSpacing     =   1.0
+      LockBottom      =   True
+      LockedInPosition=   False
+      LockLeft        =   True
+      LockRight       =   True
+      LockTop         =   True
+      Mask            =   ""
+      Multiline       =   True
+      ReadOnly        =   True
+      Scope           =   2
+      ScrollbarHorizontal=   False
+      ScrollbarVertical=   True
+      Styled          =   False
+      TabIndex        =   0
+      TabPanelIndex   =   0
+      TabStop         =   True
+      Text            =   ""
+      TextColor       =   &c00000000
+      TextFont        =   "Courier"
+      TextSize        =   0.0
+      TextUnit        =   0
+      Top             =   20
+      Underline       =   False
+      UseFocusRing    =   False
+      Visible         =   True
+      Width           =   560
+   End
+   Begin PushButton PushButton1
+      AutoDeactivate  =   True
+      Bold            =   False
+      ButtonStyle     =   "0"
+      Cancel          =   False
+      Caption         =   "Disconnect"
+      Default         =   False
+      Enabled         =   True
+      Height          =   20
+      HelpTag         =   ""
+      Index           =   -2147483648
+      InitialParent   =   ""
+      Italic          =   False
+      Left            =   500
+      LockBottom      =   True
+      LockedInPosition=   False
+      LockLeft        =   False
+      LockRight       =   True
+      LockTop         =   False
+      Scope           =   0
+      TabIndex        =   1
+      TabPanelIndex   =   0
+      TabStop         =   True
+      TextFont        =   "SmallSystem"
+      TextSize        =   0.0
+      TextUnit        =   0
+      Top             =   382
+      Underline       =   False
+      Visible         =   True
+      Width           =   80
+   End
+   Begin Xojo.Core.Timer Timer1
+      Index           =   -2147483648
+      LockedInPosition=   False
+      Mode            =   "0"
+      Period          =   35000
+      Scope           =   0
+      TabPanelIndex   =   0
+      Tolerance       =   0
+   End
 End
 #tag EndWindow
 
 #tag WindowCode
 	#tag Event
 		Sub Open()
-		  Dim theSocket As New TCPSocket
+		  // set the verbose mode
+		  MQTTLib.VerboseMode = True
 		  
-		  theSocket.Address = "rpi.edlr"
+		  // Setup the socket
+		  Dim theSocket As New TCPSocket
+		  theSocket.Address = "test.mosquitto.org"
 		  theSocket.Port = MQTTLib.kDefaultPort
 		  
-		  Self.pRawConnection = New MQTTLib.RawConnection( New MQTTLib.TCPSocketAdapter( theSocket ) )
-		  
-		  AddHandler Self.pRawConnection.Connected, AddressOf Self.HandleRawConnectionAdapterConnected
-		  AddHandler Self.pRawConnection.ControlPacketReceived, AddressOf Self.HandleRawConnectionControlPacketReceived
-		  AddHandler Self.pRawConnection.Error, AddressOf Self.HandleRawConnectionError
-		  
-		  Self.pRawConnection.Open
-		End Sub
-	#tag EndEvent
-
-
-	#tag Method, Flags = &h1
-		Protected Sub HandleRawConnectionAdapterConnected(inRawConnection As MQTTLib.RawConnection)
-		  System.DebugLog CurrentMethodName + "Sending CONNECT packet..."
-		  
+		  // Setup the connection options
 		  Dim theConnectOptions As New MQTTLib.OptionsCONNECT
 		  
-		  theConnectOptions.KeepAlive = 10
-		  theConnectOptions.ClientID = "XojoTest"
+		  theConnectOptions.KeepAlive = 30
+		  theConnectOptions.ClientID = "zdEdLRXojoTest"
 		  theConnectOptions.PasswordFlag = False
 		  theConnectOptions.CleanSessionFlag = True
 		  theConnectOptions.UsernameFlag = False
 		  theConnectOptions.WillFlag = False
 		  
-		  inRawConnection.SendControlPacket( New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.CONNECT, theConnectOptions ) )
-		  
-		  
+		  Me.MQTTClient.Setup New MQTTLib.TCPSocketAdapter( theSocket ), theConnectOptions
+		  Me.MQTTClient.Connect
+		End Sub
+	#tag EndEvent
+
+
+	#tag Method, Flags = &h21
+		Private Sub Log(inLogMessage As String = "")
+		  Self.LogArea.AppendText Xojo.Core.Date.Now.ToText + " - " + inLogMessage + EndOfLine
 		End Sub
 	#tag EndMethod
 
-	#tag Method, Flags = &h1
-		Protected Sub HandleRawConnectionControlPacketReceived(inRawConnection As MQTTLib.RawConnection, inControlPacket As MQTTLib.ControlPacket)
-		  System.DebugLog CurrentMethodName
+	#tag Method, Flags = &h21
+		Private Sub SendMessage()
+		  Dim theMessage As New MQTTLib.OptionsPUBLISH
 		  
+		  theMessage.Message = "Hello World - " + Xojo.Core.Date.Now.ToText
+		  theMessage.TopicName = "zd/Test"
+		  theMessage.QoSLevel = MQTTLib.QoS.AtLeastOnceDelivery
+		  
+		  Self.MQTTClient.Publish theMessage
 		End Sub
 	#tag EndMethod
-
-	#tag Method, Flags = &h1
-		Protected Sub HandleRawConnectionError(inRawConnection As MQTTLib.RawConnection, inError As MQTTLib.Error)
-		  System.DebugLog CurrentMethodName
-		  
-		End Sub
-	#tag EndMethod
-
-
-	#tag Property, Flags = &h1
-		Protected pRawConnection As MQTTLib.RawConnection
-	#tag EndProperty
 
 
 #tag EndWindowCode
 
+#tag Events MQTTClient
+	#tag Event
+		Sub BrokerConnected(inSessionPresentFlag As Boolean)
+		  Self.Log "Connected to Broker. Session Present flag is " + If( inSessionPresentFlag, "True", "False" )
+		  
+		  Timer1.Mode = Xojo.Core.Timer.Modes.Multiple
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub BrokerConnectionRejected(inErrorCode As Integer)
+		  Self.Log "Connection Rejected - " + Str( Integer( inErrorCode ) )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub Error(inMessage As String, inError As MQTTLib.Error)
+		  Timer1.Mode = Xojo.Core.Timer.Modes.Off
+		  
+		  Self.Log inMessage + " - " + MQTTLib.ErrorToString( inError )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPINGRESP()
+		  Self.Log "PINGRESP received"
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBACK(inPacketID As UInt16)
+		  Self.Log "PUBACK received with packet id #" + Str( inPacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBCOMP(inPacketID As UInt16)
+		  Self.Log "PUBCOMP received with packet id #" + Str( inPacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH)
+		  Self.Log "PUBLISH received with packet id #" + Str( inPublish.PacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBREC(inPacketID As UInt16)
+		  Self.Log "PUBREC received with packet id #" + Str( inPacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBREL(inPacketID As UInt16)
+		  Self.Log "PUBREL received with packet id #" + Str( inPacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedSUBACK(inSUBACKData As MQTTLib.OptionsSUBACK)
+		  
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+#tag Events PushButton1
+	#tag Event
+		Sub Action()
+		  Self.MQTTClient.Disconnect
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+#tag Events Timer1
+	#tag Event
+		Sub Action()
+		  Self.SendMessage
+		End Sub
+	#tag EndEvent
+#tag EndEvents
 #tag ViewBehavior
 	#tag ViewProperty
 		Name="BackColor"

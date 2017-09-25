@@ -2,6 +2,12 @@
 Protected Class OptionsUNSUBSCRIBE
 Implements ControlPacketOptions
 	#tag Method, Flags = &h0
+		Function GetFixedHeaderFlagBits() As UInt8
+		  Return &b0010
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function GetRawData() As String
 		  
 		  Dim theParts() As String
@@ -20,6 +26,20 @@ Implements ControlPacketOptions
 		  // Return the joined parts
 		  Return Join( theParts, "" )
 		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
+		  //-- Check if the flags are valid and raise an exception if they aren't.
+		  
+		  If inFlags <> &b0010 Then
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, Self.kInvalidFlagBitsMessage, MQTTLib.Error.InvalidFixedHeaderFlags )
+		    
+		  Else
+		    Return
+		    
+		  End If
+		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
@@ -68,6 +88,10 @@ Implements ControlPacketOptions
 	#tag Property, Flags = &h21
 		Private pTopicNames() As String
 	#tag EndProperty
+
+
+	#tag Constant, Name = kInvalidFlagBitsMessage, Type = String, Dynamic = False, Default = \"The flag bits for UNSUBSCRIBEpacket must be &b0010", Scope = Public
+	#tag EndConstant
 
 
 	#tag ViewBehavior

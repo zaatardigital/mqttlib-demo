@@ -1,30 +1,6 @@
-#tag Interface
-Protected Interface ControlPacketOptions
-	#tag Method, Flags = &h0
-		Function GetFixedHeaderFlagBits() As UInt8
-		  
-		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Function GetRawdata() As String
-		  
-		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
-		  
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Sub ParseRawData(inRawData As MemoryBlock)
-		  
-		End Sub
-	#tag EndMethod
-
-
+#tag Class
+Protected Class OptionsPUBREC
+Inherits MQTTLib.OptionsPUBCommons
 	#tag ViewBehavior
 		#tag ViewProperty
 			Name="Index"
@@ -47,6 +23,11 @@ Protected Interface ControlPacketOptions
 			Type="String"
 		#tag EndViewProperty
 		#tag ViewProperty
+			Name="PacketID"
+			Group="Behavior"
+			Type="UInt16"
+		#tag EndViewProperty
+		#tag ViewProperty
 			Name="Super"
 			Visible=true
 			Group="ID"
@@ -60,5 +41,5 @@ Protected Interface ControlPacketOptions
 			Type="Integer"
 		#tag EndViewProperty
 	#tag EndViewBehavior
-End Interface
-#tag EndInterface
+End Class
+#tag EndClass
