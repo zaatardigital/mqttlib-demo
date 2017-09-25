@@ -8,7 +8,7 @@ Protected Class ClientConnection
 		  
 		  // Stop the timers
 		  Self.pPeriodicCheckTimer.Mode = Timer.ModeOff
-		  Self.pKeepAliveTimer.Mode = Timer.ModeOff
+		  Self.pKeepAliveTimer.Mode = Xojo.Core.Timer.Modes.Off
 		  
 		  // Clear the dictionaries
 		  Self.pPacketsAwaitingResponse.RemoveAll
@@ -38,7 +38,7 @@ Protected Class ClientConnection
 		  Self.pPacketsAwaitingResponseTimeout = New Xojo.Core.Dictionary
 		  
 		  // Create the keep alive timer
-		  Self.pKeepAliveTimer = New Timer
+		  Self.pKeepAliveTimer = New Xojo.Core.Timer
 		  
 		  // and wire it
 		  AddHandler Self.pKeepAliveTimer.Action, WeakAddressOf Self.HandleKeepAliveTimerAction
@@ -56,7 +56,7 @@ Protected Class ClientConnection
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Sub HandleKeepAliveTimerAction(inTimer As Timer)
+		Private Sub HandleKeepAliveTimerAction(inTimer As Xojo.Core.Timer)
 		  #pragma Unused inTimer
 		  
 		  // As simple as this
@@ -229,7 +229,7 @@ Protected Class ClientConnection
 		    pConnected = True
 		    
 		    // Arm the keep alive timer
-		    Self.pKeepAliveTimer.Mode = Timer.ModeSingle
+		    Self.pKeepAliveTimer.Mode = Xojo.Core.Timer.Modes.Single
 		    If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": Broker connected"
 		    
 		    RaiseEvent BrokerConnected( inOptions.SessionPresentFlag )
@@ -259,7 +259,7 @@ Protected Class ClientConnection
 		  RaiseEvent ReceivedPINGRESP
 		  
 		  // rearm the keep alive timer
-		  Self.pKeepAliveTimer.Mode = Timer.ModeSingle
+		  Self.pKeepAliveTimer.Mode = Xojo.Core.Timer.Modes.Single
 		End Sub
 	#tag EndMethod
 
@@ -399,7 +399,11 @@ Protected Class ClientConnection
 		    Self.pRawConnection.SendControlPacket inControlPacket
 		    
 		    // Reset the keep alive timer
-		    If Not( Self.pKeepAliveTimer Is Nil ) Then Self.pKeepAliveTimer.Reset
+		    If Not( Self.pKeepAliveTimer Is Nil ) Then 
+		      Self.pKeepAliveTimer.Mode = Xojo.Core.Timer.Modes.Off
+		      Self.pKeepAliveTimer.Mode = Xojo.Core.Timer.Modes.Single
+		      
+		    End If
 		    
 		  Else // There is no connection
 		    Dim theMessage As String = "There is no raw connection to send the packet."
@@ -549,7 +553,7 @@ Protected Class ClientConnection
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
-		Private pKeepAliveTimer As Timer
+		Private pKeepAliveTimer As Xojo.Core.Timer
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
