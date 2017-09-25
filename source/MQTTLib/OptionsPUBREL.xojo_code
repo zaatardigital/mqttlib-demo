@@ -2,6 +2,12 @@
 Protected Class OptionsPUBREL
 Inherits MQTTLib.OptionsPUBCommons
 	#tag Method, Flags = &h0
+		Function GetFixedHeaderFlagBits() As UInt8
+		  Return &b0010
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub ParseFixedHeaderFlagBits(inFlags As UInt8)
 		  //-- Check if the flags are valid and raise an exception if they aren't.
 		  

@@ -111,6 +111,15 @@ Begin Window Window1
       Visible         =   True
       Width           =   80
    End
+   Begin Xojo.Core.Timer Timer1
+      Index           =   -2147483648
+      LockedInPosition=   False
+      Mode            =   "0"
+      Period          =   35000
+      Scope           =   0
+      TabPanelIndex   =   0
+      Tolerance       =   0
+   End
 End
 #tag EndWindow
 
@@ -122,14 +131,14 @@ End
 		  
 		  // Setup the socket
 		  Dim theSocket As New TCPSocket
-		  theSocket.Address = "rpi.edlr"
+		  theSocket.Address = "test.mosquitto.org"
 		  theSocket.Port = MQTTLib.kDefaultPort
 		  
 		  // Setup the connection options
 		  Dim theConnectOptions As New MQTTLib.OptionsCONNECT
 		  
-		  theConnectOptions.KeepAlive = 10
-		  theConnectOptions.ClientID = "XojoTest"
+		  theConnectOptions.KeepAlive = 30
+		  theConnectOptions.ClientID = "zdEdLRXojoTest"
 		  theConnectOptions.PasswordFlag = False
 		  theConnectOptions.CleanSessionFlag = True
 		  theConnectOptions.UsernameFlag = False
@@ -167,7 +176,7 @@ End
 		Sub BrokerConnected(inSessionPresentFlag As Boolean)
 		  Self.Log "Connected to Broker. Session Present flag is " + If( inSessionPresentFlag, "True", "False" )
 		  
-		  Xojo.Core.Timer.CallLater( 1000, WeakAddressOf Self.SendMessage )
+		  Timer1.Mode = Xojo.Core.Timer.Modes.Multiple
 		End Sub
 	#tag EndEvent
 	#tag Event
@@ -177,6 +186,8 @@ End
 	#tag EndEvent
 	#tag Event
 		Sub Error(inMessage As String, inError As MQTTLib.Error)
+		  Timer1.Mode = Xojo.Core.Timer.Modes.Off
+		  
 		  Self.Log inMessage + " - " + MQTTLib.ErrorToString( inError )
 		End Sub
 	#tag EndEvent
@@ -185,11 +196,48 @@ End
 		  Self.Log "PINGRESP received"
 		End Sub
 	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBACK(inPacketID As UInt16)
+		  Self.Log "PUBACK received with packet id #" + Str( inPacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBCOMP(inPacketID As UInt16)
+		  Self.Log "PUBCOMP received with packet id #" + Str( inPacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH)
+		  Self.Log "PUBLISH received with packet id #" + Str( inPublish.PacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBREC(inPacketID As UInt16)
+		  Self.Log "PUBREC received with packet id #" + Str( inPacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedPUBREL(inPacketID As UInt16)
+		  Self.Log "PUBREL received with packet id #" + Str( inPacketID )
+		End Sub
+	#tag EndEvent
+	#tag Event
+		Sub ReceivedSUBACK(inSUBACKData As MQTTLib.OptionsSUBACK)
+		  
+		End Sub
+	#tag EndEvent
 #tag EndEvents
 #tag Events PushButton1
 	#tag Event
 		Sub Action()
 		  Self.MQTTClient.Disconnect
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+#tag Events Timer1
+	#tag Event
+		Sub Action()
+		  Self.SendMessage
 		End Sub
 	#tag EndEvent
 #tag EndEvents

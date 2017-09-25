@@ -89,6 +89,9 @@ Inherits zd.EasyException
 				"16 - SUBACKParsingError"
 				"17 - SocketAdapterNotConnected"
 				"18 - InvalidFixedHeaderFlags"
+				"19 - InvalidPacketID"
+				"20 - PINGTimedOut"
+				"21 - NotConnected"
 			#tag EndEnumValues
 		#tag EndViewProperty
 		#tag ViewProperty
