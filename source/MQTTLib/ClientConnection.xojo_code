@@ -685,7 +685,7 @@ Protected Class ClientConnection
 		    
 		  End If
 		  
-		  Dim thePacket As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBLISH, inOptions )
+		  Dim thePacket As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.SUBSCRIBE, inOptions )
 		  Self.SendControlPacket( thePacket )
 		End Sub
 	#tag EndMethod
