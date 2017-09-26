@@ -178,7 +178,7 @@ End
 	#tag EndEvent
 	#tag Event
 		Sub Error(inMessage As String, inError As MQTTLib.Error)
-		  Timer1.Mode = Xojo.Core.Timer.Modes.Off
+		  
 		End Sub
 	#tag EndEvent
 	#tag Event
