@@ -156,6 +156,9 @@ Protected Class ClientConnection
 		  Case MQTTLib.ControlPacket.Type.PUBREL
 		    Self.ProcessPUBREL MQTTLib.OptionsPUBREL( inControlPacket.Options )
 		    
+		  Case MQTTLib.ControlPacket.Type.UNSUBACK
+		    Self.ProcessUNSUBACK MQTTLib.OptionsUNSUBACK( inControlPacket.Options )
+		    
 		  Else
 		    Self.ProcessProtocolError( CurrentMethodName, "Unsupported control packet type #" _
 		    + Str( Integer( inControlPacket.Type ) ) + ".", MQTTLib.Error.UnsupportedControlPacketType )
@@ -521,6 +524,29 @@ Protected Class ClientConnection
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h21
+		Private Sub ProcessUNSUBACK(inUNSUBACKData As MQTTLib.OptionsUNSUBACK)
+		  //-- Process a UNSUBACK packet
+		  
+		  // Get the packet id
+		  Dim thePacketID As UInt16 = inUNSUBACKData.PacketID
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": Received an UNSUBACK with packetID #" + Str( thePacketID )
+		  
+		  // Check for zero packetID
+		  If thePacketID = 0 Then
+		    Self.ProcessProtocolError( CurrentMethodName, "A UNSUBACK's packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    Return
+		    
+		  End If
+		  
+		  // Remove the original packet and timeout time from the unconfirmed control packet dictionaries
+		  Self.RemovePacketAwaitingReply( thePacketID )
+		  
+		  RaiseEvent ReceivedUNSUBACK( thePacketID )
+		End Sub
+	#tag EndMethod
+
 	#tag Method, Flags = &h0
 		Sub Publish(inOptions As MQTTLib.OptionsPUBLISH)
 		  //-- Send a PUBLISH control packet
@@ -664,6 +690,27 @@ Protected Class ClientConnection
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Sub Unsubscribe(inOptions As MQTTLib.OptionsUNSUBSCRIBE)
+		  //-- Unsubscribe from the topics listed in inOptions
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
+		  // inOptions can't be nil
+		  If inOptions Is Nil Then Raise New zd.EasyNilObjectException( CurrentMethodName, "inOptions can't be Nil." )
+		  
+		  // Check for the packetID validity
+		  If inOptions.PacketID = 0 Then inOptions.PacketID = Self.NewPacketID
+		  
+		  // Generate the control packet and send it
+		  Dim thePacket As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.SUBSCRIBE, inOptions )
+		  Self.SendControlPacket thePacket
+		  
+		  // Store the packet with its ID for the SUBACK reply
+		  Self.StorePacketAwaitingReply( inOptions.PacketID, thePacket )
+		End Sub
+	#tag EndMethod
+
 
 	#tag Hook, Flags = &h0
 		Event BrokerConnected(inSessionPresentFlag As Boolean)
@@ -703,6 +750,10 @@ Protected Class ClientConnection
 
 	#tag Hook, Flags = &h0
 		Event ReceivedSUBACK(inSUBACKData As MQTTLib.OptionsSUBACK)
+	#tag EndHook
+
+	#tag Hook, Flags = &h0
+		Event ReceivedUNSUBACK(inPacketID As UInt16)
 	#tag EndHook
 
 
