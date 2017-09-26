@@ -39,6 +39,7 @@ Class=OptionsPUBREL;MQTTLib/OptionsPUBREL.xojo_code;&h351CC7FF;&h2359A7FF;false
 Class=OptionsPUBACK;MQTTLib/OptionsPUBACK.xojo_code;&h49A1C7FF;&h2359A7FF;false
 Class=OptionsPUBREC;MQTTLib/OptionsPUBREC.xojo_code;&h6BDFE7FF;&h2359A7FF;false
 Class=OptionsPUBCOMP;MQTTLib/OptionsPUBCOMP.xojo_code;&h10096FFF;&h2359A7FF;false
+Class=OptionsUNSUBACK;MQTTLib/OptionsUNSUBACK.xojo_code;&h24522FFF;&h2359A7FF;false
 DefaultWindow=Window1
 AppMenuBar=MainMenuBar
 MajorVersion=1
