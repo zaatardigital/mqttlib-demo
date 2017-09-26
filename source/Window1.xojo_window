@@ -111,15 +111,6 @@ Begin Window Window1
       Visible         =   True
       Width           =   80
    End
-   Begin Xojo.Core.Timer Timer1
-      Index           =   -2147483648
-      LockedInPosition=   False
-      Mode            =   "0"
-      Period          =   35000
-      Scope           =   0
-      TabPanelIndex   =   0
-      Tolerance       =   0
-   End
 End
 #tag EndWindow
 
@@ -158,13 +149,12 @@ End
 
 	#tag Method, Flags = &h21
 		Private Sub SendMessage()
-		  Dim theMessage As New MQTTLib.OptionsPUBLISH
+		  Dim theOptions As New MQTTLib.OptionsSUBSCRIBE
 		  
-		  theMessage.Message = "Hello World - " + Xojo.Core.Date.Now.ToText
-		  theMessage.TopicName = "zd/Test"
-		  theMessage.QoSLevel = MQTTLib.QoS.AtLeastOnceDelivery
+		  theOptions.AddTopic "$SYS/broker/messages/#", MQTTLib.QoS.ExactlyOnceDelivery
 		  
-		  Self.MQTTClient.Publish theMessage
+		  Self.MQTTClient.Subscribe theOptions
+		  
 		End Sub
 	#tag EndMethod
 
@@ -176,7 +166,9 @@ End
 		Sub BrokerConnected(inSessionPresentFlag As Boolean)
 		  Self.Log "Connected to Broker. Session Present flag is " + If( inSessionPresentFlag, "True", "False" )
 		  
-		  Timer1.Mode = Xojo.Core.Timer.Modes.Multiple
+		  ' Timer1.Mode = Xojo.Core.Timer.Modes.Multiple
+		  
+		  Xojo.Core.Timer.CallLater 1000, AddressOf Self.SendMessage
 		End Sub
 	#tag EndEvent
 	#tag Event
@@ -186,9 +178,7 @@ End
 	#tag EndEvent
 	#tag Event
 		Sub Error(inMessage As String, inError As MQTTLib.Error)
-		  Timer1.Mode = Xojo.Core.Timer.Modes.Off
 		  
-		  Self.Log inMessage + " - " + MQTTLib.ErrorToString( inError )
 		End Sub
 	#tag EndEvent
 	#tag Event
@@ -231,13 +221,6 @@ End
 	#tag Event
 		Sub Action()
 		  Self.MQTTClient.Disconnect
-		End Sub
-	#tag EndEvent
-#tag EndEvents
-#tag Events Timer1
-	#tag Event
-		Sub Action()
-		  Self.SendMessage
 		End Sub
 	#tag EndEvent
 #tag EndEvents
