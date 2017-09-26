@@ -3,6 +3,8 @@ Protected Class OptionsPUBCommons
 Implements ControlPacketOptions
 	#tag Method, Flags = &h0
 		Sub Constructor(inPacketID As UInt16 = 0)
+		  //-- Generate one of PUBxxx packet and set its packetID
+		  
 		  Self.pPacketID = inPacketID
 		End Sub
 	#tag EndMethod
@@ -15,6 +17,8 @@ Implements ControlPacketOptions
 
 	#tag Method, Flags = &h0
 		Function GetRawdata() As String
+		  //-- The payload is just made of the packetID
+		  
 		  Return MQTTLib.GetUInt16BinaryString( Self.pPacketID )
 		End Function
 	#tag EndMethod
@@ -35,6 +39,8 @@ Implements ControlPacketOptions
 
 	#tag Method, Flags = &h0
 		Sub ParseRawData(inRawData As MemoryBlock)
+		  //-- The payload is just made of the packetID
+		  
 		  Self.pPacketID = inRawData.UInt16Value( 0 )
 		End Sub
 	#tag EndMethod

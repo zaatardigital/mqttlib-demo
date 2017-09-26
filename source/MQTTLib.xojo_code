@@ -100,16 +100,18 @@ Protected Module MQTTLib
 
 	#tag Method, Flags = &h0
 		Function QoSToString(inQoS As MQTTLib.QoS) As String
+		  //-- Get the value of the QoS enumeration and make it a string
 		  
 		  Select Case inQoS
-		  Case MQTTLib.QoS.AtMostOnceDelivery
-		    Return "MQTTLib.QoS.AtMostOnceDelivery"
+		    
+		  Case MQTTLib.QoS.AtMostOnceDelivery // QoS = 0
+		    Return "MQTTLib.QoS.AtMostOnceDelivery" // QoS = 1
 		    
 		  Case MQTTLib.QoS.AtLeastOnceDelivery
-		    Return "MQTTLib.QoS.AtLeastOnceDelivery"
+		    Return "MQTTLib.QoS.AtLeastOnceDelivery" // QoS = 2
 		    
 		  Case MQTTLib.QoS.ExactlyOnceDelivery
-		    Return "MQTTLib.QoS.ExactlyOnceDelivery"
+		    Return "MQTTLib.QoS.ExactlyOnceDelivery" // QoS = 3
 		    
 		  Else
 		    Raise New zd.EasyException( CurrentMethodName, "Unimplemented case #" + Str( Integer ( inQoS ) ) + " for MQTTLib.QoS enumeration." )
