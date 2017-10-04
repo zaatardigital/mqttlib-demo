@@ -92,6 +92,8 @@ Inherits zd.EasyException
 				"19 - InvalidPacketID"
 				"20 - PINGTimedOut"
 				"21 - NotConnected"
+				"22 - UnknownPacketID"
+				"23 - UnexpectedResponseType"
 			#tag EndEnumValues
 		#tag EndViewProperty
 		#tag ViewProperty
