@@ -2,6 +2,12 @@
 Protected Class OptionsUNSUBSCRIBE
 Implements ControlPacketOptions
 	#tag Method, Flags = &h0
+		Sub AddTopicName(inTopicName As String)
+		  Self.pTopicNames.Append inTopicName
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function GetFixedHeaderFlagBits() As UInt8
 		  Return &b0010
 		End Function
