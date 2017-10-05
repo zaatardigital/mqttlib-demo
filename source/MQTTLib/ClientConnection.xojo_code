@@ -55,6 +55,32 @@ Protected Class ClientConnection
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Sub EasyTCPConnect(inHost As String, inPort As int, inClientID As String, inCleanSession As Boolean, inKeepAlive As UInt16)
+		  //-- An easy way to connect via unsecure TCP with fewer parameters
+		  // NB: inKeepAlive is in seconds ( 0 means no keep alive mechanism ) 
+		  
+		  // Create and setup the socket
+		  Dim theSocket As New TCPSocket
+		  
+		  theSocket.Address = inHost
+		  theSocket.Port = inPort
+		  
+		  // Create and setup the connection options
+		  Dim theConnectOptions As New MQTTLib.OptionsCONNECT
+		  
+		  theConnectOptions.KeepAlive = inKeepAlive
+		  theConnectOptions.ClientID = inClientID
+		  theConnectOptions.CleanSessionFlag = inCleanSession
+		  
+		  // Setup the ClientConnection
+		  Self.Setup New MQTTLib.TCPSocketAdapter( theSocket ), theConnectOptions
+		  
+		  // And connect
+		  Self.Connect
+		End Sub
+	#tag EndMethod
+
 	#tag Method, Flags = &h21
 		Private Sub HandleKeepAliveTimerAction(inTimer As Xojo.Core.Timer)
 		  #pragma Unused inTimer
