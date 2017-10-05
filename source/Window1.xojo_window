@@ -197,19 +197,19 @@ End
 		End Sub
 	#tag EndEvent
 	#tag Event
-		Sub ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH)
+		Function ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH) As Boolean
 		  Self.Log "PUBLISH received with packet id #" + Str( inPublish.PacketID )
-		End Sub
+		End Function
 	#tag EndEvent
 	#tag Event
-		Sub ReceivedPUBREC(inPacketID As UInt16)
+		Function ReceivedPUBREC(inPacketID As UInt16) As Boolean
 		  Self.Log "PUBREC received with packet id #" + Str( inPacketID )
-		End Sub
+		End Function
 	#tag EndEvent
 	#tag Event
-		Sub ReceivedPUBREL(inPacketID As UInt16)
+		Function ReceivedPUBREL(inPacketID As UInt16) As Boolean
 		  Self.Log "PUBREL received with packet id #" + Str( inPacketID )
-		End Sub
+		End Function
 	#tag EndEvent
 	#tag Event
 		Sub ReceivedSUBACK(inSUBACKData As MQTTLib.OptionsSUBACK)

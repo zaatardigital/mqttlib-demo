@@ -55,6 +55,32 @@ Protected Class ClientConnection
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Sub EasyTCPConnect(inHost As String, inPort As int, inClientID As String, inCleanSession As Boolean, inKeepAlive As UInt16)
+		  //-- An easy way to connect via unsecure TCP with fewer parameters
+		  // NB: inKeepAlive is in seconds ( 0 means no keep alive mechanism ) 
+		  
+		  // Create and setup the socket
+		  Dim theSocket As New TCPSocket
+		  
+		  theSocket.Address = inHost
+		  theSocket.Port = inPort
+		  
+		  // Create and setup the connection options
+		  Dim theConnectOptions As New MQTTLib.OptionsCONNECT
+		  
+		  theConnectOptions.KeepAlive = inKeepAlive
+		  theConnectOptions.ClientID = inClientID
+		  theConnectOptions.CleanSessionFlag = inCleanSession
+		  
+		  // Setup the ClientConnection
+		  Self.Setup New MQTTLib.TCPSocketAdapter( theSocket ), theConnectOptions
+		  
+		  // And connect
+		  Self.Connect
+		End Sub
+	#tag EndMethod
+
 	#tag Method, Flags = &h21
 		Private Sub HandleKeepAliveTimerAction(inTimer As Xojo.Core.Timer)
 		  #pragma Unused inTimer
@@ -366,27 +392,29 @@ Protected Class ClientConnection
 		    
 		  End If
 		  
-		  RaiseEvent ReceivedPUBLISH( inPUBLISHData )
-		  
 		  // Handling the response depending of the QoS
 		  
 		  Select Case inPUBLISHData.QoSLevel
 		    
 		  Case MQTTLib.QoS.AtMostOnceDelivery // QoS = 0
-		    // Nothing more to do here
-		    Return
+		    // The returned value has no signification
+		    Call RaiseEvent ReceivedPUBLISH( inPUBLISHData )
 		    
 		  Case MQTTLib.QoS.AtLeastOnceDelivery // QoS = 1
-		    // Just send a PUBACK
-		    Self.SendControlPacket New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( thePacketID ) )
+		    
+		    If Not RaiseEvent ReceivedPUBLISH( inPUBLISHData ) Then
+		      // Send a PUBACK if the event's handler returned False
+		      Self.SendControlPacket New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( thePacketID ) )
+		      
+		    End If
 		    
 		  Case MQTTLib.Qos.ExactlyOnceDelivery // QoS = 2
-		    // Send a PUBREC
-		    Dim thePUBREC As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREC, New MQTTLib.OptionsPUBREC( thePacketID ) )
-		    Self.SendControlPacket thePUBREC
 		    
-		    // Store the control packet for time out purpose
-		    Self.StorePacketAwaitingReply( thePacketID, thePUBREC )
+		    If Not RaiseEvent ReceivedPUBLISH( inPUBLISHData ) Then
+		      // Send a PUBREC if the event's handler returned False
+		      Self.SendPUBREC thePacketID
+		      
+		    End If
 		    
 		  End Select
 		  
@@ -437,13 +465,12 @@ Protected Class ClientConnection
 		  // Clear the dictionaries of this packet ID
 		  Self.RemovePacketAwaitingReply( thePacketID )
 		  
-		  // give the subclass the control
-		  RaiseEvent ReceivedPUBREC( thePacketID )
-		  
-		  // A PUBREC must be replied with a PUBREL
-		  Dim thePUBREL As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREL, New MQTTLib.OptionsPUBREL( thePacketID ) )
-		  Self.SendControlPacket thePUBREL
-		  Self.StorePacketAwaitingReply( thePacketID, thePUBREL )
+		  // Signal the reception of the PUBREC control packet
+		  If Not RaiseEvent ReceivedPUBREC( thePacketID ) Then
+		    // The event's handler return false, we have to handle the response.
+		    Self.SendPUBREL( thePacketID )
+		    
+		  End If
 		  
 		End Sub
 	#tag EndMethod
@@ -493,11 +520,11 @@ Protected Class ClientConnection
 		  Self.RemovePacketAwaitingReply( thePacketID )
 		  
 		  // give the subclass the control
-		  RaiseEvent ReceivedPUBREL( thePacketID )
-		  
-		  // A PUBREL must be replied with a PUBCOMP
-		  Dim thePUBCOMP As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBCOMP, New MQTTLib.OptionsPUBCOMP( thePacketID ) )
-		  Self.SendControlPacket thePUBCOMP
+		  If Not RaiseEvent ReceivedPUBREL( thePacketID ) Then
+		    // The event's handler return false, we have to handle the response.
+		    Self.SendPUBCOMP( thePacketID )
+		    
+		  End If
 		End Sub
 	#tag EndMethod
 
@@ -609,18 +636,87 @@ Protected Class ClientConnection
 		Sub SendPUBACK(inPacketID As UInt16)
 		  //-- Send a PUBACK packet to the broker
 		  
-		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": inPacketID = " + Str( inPacketID )
 		  
 		  // Check for zero packetID
 		  If inPacketID <> 0 Then
 		    // Build and send the PUBACK Control packet
-		    Self.SendControlPacket New ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( inPacketID ) ) 
+		    Self.SendControlPacket New ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( inPacketID ) )
+		    
+		    // Remove the control packet ID from the awaiting packet dictionaries
+		    Self.RemovePacketAwaitingReply( inPacketID )
 		    
 		  Else
 		    Me.Disconnect
 		    Raise New MQTTLib.ProtocolException( CurrentMethodName, "A packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
 		    
 		  End If
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub SendPUBCOMP(inPacketID As UInt16)
+		  //-- Send a PUBCOMP packet to the broker
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": inPacketID = " + Str( inPacketID )
+		  
+		  // Check for zero packetID
+		  If inPacketID = 0 Then
+		    Me.Disconnect
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, "A packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    
+		  End If
+		  
+		  // Send a PUBREC
+		  Dim thePUBCOMP As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBCOMP, New MQTTLib.OptionsPUBCOMP( inPacketID ) )
+		  Self.SendControlPacket thePUBCOMP
+		  
+		  // Remove the control packet ID from the awaiting packet dictionaries
+		  Self.RemovePacketAwaitingReply( inPacketID )
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub SendPUBREC(inPacketID As UInt16)
+		  //-- Send a PUBREC packet to the broker
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": inPacketID = " + Str( inPacketID )
+		  
+		  // Check for zero packetID
+		  If inPacketID = 0 Then
+		    Me.Disconnect
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, "A packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    
+		  End If
+		  
+		  // Send a PUBREC
+		  Dim thePUBREC As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREC, New MQTTLib.OptionsPUBREC( inPacketID ) )
+		  Self.SendControlPacket thePUBREC
+		  
+		  // Store the control packet for time out purpose
+		  Self.StorePacketAwaitingReply( inPacketID, thePUBREC )
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub SendPUBREL(inPacketID As UInt16)
+		  //-- Send a PUBREL packet to the broker
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": inPacketID = " + Str( inPacketID )
+		  
+		  // Check for zero packetID
+		  If inPacketID = 0 Then
+		    Me.Disconnect
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, "A packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    
+		  End If
+		  
+		  // Send a PUBREC
+		  Dim thePUBREL As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREL, New MQTTLib.OptionsPUBREL( inPacketID ) )
+		  Self.SendControlPacket thePUBREL
+		  
+		  // Store the control packet for time out purpose
+		  Self.StorePacketAwaitingReply( inPacketID, thePUBREL )
 		End Sub
 	#tag EndMethod
 
@@ -737,15 +833,15 @@ Protected Class ClientConnection
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
-		Event ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH)
+		Event ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH) As Boolean
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
-		Event ReceivedPUBREC(inPacketID As UInt16)
+		Event ReceivedPUBREC(inPacketID As UInt16) As Boolean
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
-		Event ReceivedPUBREL(inPacketID As UInt16)
+		Event ReceivedPUBREL(inPacketID As UInt16) As Boolean
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
