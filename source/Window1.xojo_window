@@ -202,9 +202,9 @@ End
 		End Function
 	#tag EndEvent
 	#tag Event
-		Sub ReceivedPUBREC(inPacketID As UInt16)
+		Function ReceivedPUBREC(inPacketID As UInt16) As Boolean
 		  Self.Log "PUBREC received with packet id #" + Str( inPacketID )
-		End Sub
+		End Function
 	#tag EndEvent
 	#tag Event
 		Sub ReceivedPUBREL(inPacketID As UInt16)

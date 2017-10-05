@@ -439,13 +439,12 @@ Protected Class ClientConnection
 		  // Clear the dictionaries of this packet ID
 		  Self.RemovePacketAwaitingReply( thePacketID )
 		  
-		  // give the subclass the control
-		  RaiseEvent ReceivedPUBREC( thePacketID )
-		  
-		  // A PUBREC must be replied with a PUBREL
-		  Dim thePUBREL As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREL, New MQTTLib.OptionsPUBREL( thePacketID ) )
-		  Self.SendControlPacket thePUBREL
-		  Self.StorePacketAwaitingReply( thePacketID, thePUBREL )
+		  // Signal the reception of the PUBREC control packet
+		  If Not RaiseEvent ReceivedPUBREC( thePacketID ) Then
+		    // The event's handler return false, we have to handle the response.
+		    Self.SendPUBREL( thePacketID )
+		    
+		  End If
 		  
 		End Sub
 	#tag EndMethod
@@ -812,7 +811,7 @@ Protected Class ClientConnection
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
-		Event ReceivedPUBREC(inPacketID As UInt16)
+		Event ReceivedPUBREC(inPacketID As UInt16) As Boolean
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
