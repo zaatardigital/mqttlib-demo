@@ -616,11 +616,80 @@ Protected Class ClientConnection
 		    // Build and send the PUBACK Control packet
 		    Self.SendControlPacket New ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( inPacketID ) ) 
 		    
+		    // Remove the control packet ID from the awaiting packet dictionaries
+		    Self.RemovePacketAwaitingReply( inPacketID )
+		    
 		  Else
 		    Me.Disconnect
 		    Raise New MQTTLib.ProtocolException( CurrentMethodName, "A packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
 		    
 		  End If
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub SendPUBCOMP(inPacketID As UInt16)
+		  //-- Send a PUBCOMP packet to the broker
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": inPacketID = " + Str( inPacketID )
+		  
+		  // Check for zero packetID
+		  If inPacketID = 0 Then
+		    Me.Disconnect
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, "A packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    
+		  End If
+		  
+		  // Send a PUBREC
+		  Dim thePUBCOMP As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBCOMP, New MQTTLib.OptionsPUBCOMP( inPacketID ) )
+		  Self.SendControlPacket thePUBCOMP
+		  
+		  // Remove the control packet ID from the awaiting packet dictionaries
+		  Self.RemovePacketAwaitingReply( inPacketID )
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub SendPUBREC(inPacketID As UInt16)
+		  //-- Send a PUBREC packet to the broker
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": inPacketID = " + Str( inPacketID )
+		  
+		  // Check for zero packetID
+		  If inPacketID = 0 Then
+		    Me.Disconnect
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, "A packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    
+		  End If
+		  
+		  // Send a PUBREC
+		  Dim thePUBREC As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREC, New MQTTLib.OptionsPUBREC( inPacketID ) )
+		  Self.SendControlPacket thePUBREC
+		  
+		  // Store the control packet for time out purpose
+		  Self.StorePacketAwaitingReply( inPacketID, thePUBREC )
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub SendPUBREL(inPacketID As UInt16)
+		  //-- Send a PUBREL packet to the broker
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": inPacketID = " + Str( inPacketID )
+		  
+		  // Check for zero packetID
+		  If inPacketID = 0 Then
+		    Me.Disconnect
+		    Raise New MQTTLib.ProtocolException( CurrentMethodName, "A packetID can't be zero.", MQTTLib.Error.InvalidPacketID )
+		    
+		  End If
+		  
+		  // Send a PUBREC
+		  Dim thePUBREL As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREL, New MQTTLib.OptionsPUBREL( inPacketID ) )
+		  Self.SendControlPacket thePUBREL
+		  
+		  // Store the control packet for time out purpose
+		  Self.StorePacketAwaitingReply( inPacketID, thePUBREL )
 		End Sub
 	#tag EndMethod
 
