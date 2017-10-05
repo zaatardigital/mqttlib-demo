@@ -56,7 +56,7 @@ Protected Class ClientConnection
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Sub EasyTCPConnect(inHost As String, inPort As int, inClientID As String, inCleanSession As Boolean, inKeepAlive As UInt16)
+		Sub EasyTCPConnect(inHost As String, inPort As Integer, inClientID As String, inCleanSession As Boolean, inKeepAlive As UInt16)
 		  //-- An easy way to connect via unsecure TCP with fewer parameters
 		  // NB: inKeepAlive is in seconds ( 0 means no keep alive mechanism ) 
 		  
