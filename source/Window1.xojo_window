@@ -197,9 +197,9 @@ End
 		End Sub
 	#tag EndEvent
 	#tag Event
-		Sub ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH)
+		Function ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH) As Boolean
 		  Self.Log "PUBLISH received with packet id #" + Str( inPublish.PacketID )
-		End Sub
+		End Function
 	#tag EndEvent
 	#tag Event
 		Sub ReceivedPUBREC(inPacketID As UInt16)

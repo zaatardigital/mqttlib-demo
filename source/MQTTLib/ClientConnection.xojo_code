@@ -366,27 +366,29 @@ Protected Class ClientConnection
 		    
 		  End If
 		  
-		  RaiseEvent ReceivedPUBLISH( inPUBLISHData )
-		  
 		  // Handling the response depending of the QoS
 		  
 		  Select Case inPUBLISHData.QoSLevel
 		    
 		  Case MQTTLib.QoS.AtMostOnceDelivery // QoS = 0
-		    // Nothing more to do here
-		    Return
+		    // The returned value has no signification
+		    Call RaiseEvent ReceivedPUBLISH( inPUBLISHData )
 		    
 		  Case MQTTLib.QoS.AtLeastOnceDelivery // QoS = 1
-		    // Just send a PUBACK
+		    
+		    If Not RaiseEvent ReceivedPUBLISH( inPUBLISHData ) Then
+		      // Send a PUBACK if the event's handler returned False
 		    Self.SendControlPacket New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( thePacketID ) )
 		    
-		  Case MQTTLib.Qos.ExactlyOnceDelivery // QoS = 2
-		    // Send a PUBREC
-		    Dim thePUBREC As MQTTLib.ControlPacket = New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBREC, New MQTTLib.OptionsPUBREC( thePacketID ) )
-		    Self.SendControlPacket thePUBREC
+		    End If
 		    
-		    // Store the control packet for time out purpose
-		    Self.StorePacketAwaitingReply( thePacketID, thePUBREC )
+		  Case MQTTLib.Qos.ExactlyOnceDelivery // QoS = 2
+		    
+		    If Not RaiseEvent ReceivedPUBLISH( inPUBLISHData ) Then
+		      // Send a PUBREC if the event's handler returned False
+		      Self.SendPUBREC thePacketID
+		      
+		    End If
 		    
 		  End Select
 		  
@@ -806,7 +808,7 @@ Protected Class ClientConnection
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
-		Event ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH)
+		Event ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH) As Boolean
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
