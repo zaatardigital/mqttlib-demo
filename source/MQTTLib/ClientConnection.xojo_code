@@ -609,7 +609,7 @@ Protected Class ClientConnection
 		Sub SendPUBACK(inPacketID As UInt16)
 		  //-- Send a PUBACK packet to the broker
 		  
-		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": inPacketID = " + Str( inPacketID )
 		  
 		  // Check for zero packetID
 		  If inPacketID <> 0 Then
