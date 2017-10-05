@@ -58,24 +58,25 @@ Protected Class ClientConnection
 	#tag Method, Flags = &h0
 		Sub EasyTCPConnect(inHost As String, inPort As int, inClientID As String, inCleanSession As Boolean, inKeepAlive As UInt16)
 		  //-- An easy way to connect via unsecure TCP with fewer parameters
-		  // inKeepAlive is in seconds
+		  // NB: inKeepAlive is in seconds ( 0 means no keep alive mechanism ) 
 		  
-		  // Setup the socket
+		  // Create and setup the socket
 		  Dim theSocket As New TCPSocket
+		  
 		  theSocket.Address = inHost
 		  theSocket.Port = inPort
 		  
-		  // Setup the connection options
+		  // Create and setup the connection options
 		  Dim theConnectOptions As New MQTTLib.OptionsCONNECT
 		  
 		  theConnectOptions.KeepAlive = inKeepAlive
 		  theConnectOptions.ClientID = inClientID
-		  theConnectOptions.PasswordFlag = False
 		  theConnectOptions.CleanSessionFlag = inCleanSession
-		  theConnectOptions.UsernameFlag = False
-		  theConnectOptions.WillFlag = False
 		  
+		  // Setup the ClientConnection
 		  Self.Setup New MQTTLib.TCPSocketAdapter( theSocket ), theConnectOptions
+		  
+		  // And connect
 		  Self.Connect
 		End Sub
 	#tag EndMethod
