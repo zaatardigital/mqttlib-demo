@@ -378,8 +378,8 @@ Protected Class ClientConnection
 		    
 		    If Not RaiseEvent ReceivedPUBLISH( inPUBLISHData ) Then
 		      // Send a PUBACK if the event's handler returned False
-		    Self.SendControlPacket New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( thePacketID ) )
-		    
+		      Self.SendControlPacket New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( thePacketID ) )
+		      
 		    End If
 		    
 		  Case MQTTLib.Qos.ExactlyOnceDelivery // QoS = 2
@@ -616,7 +616,7 @@ Protected Class ClientConnection
 		  // Check for zero packetID
 		  If inPacketID <> 0 Then
 		    // Build and send the PUBACK Control packet
-		    Self.SendControlPacket New ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( inPacketID ) ) 
+		    Self.SendControlPacket New ControlPacket( MQTTLib.ControlPacket.Type.PUBACK, New MQTTLib.OptionsPUBACK( inPacketID ) )
 		    
 		    // Remove the control packet ID from the awaiting packet dictionaries
 		    Self.RemovePacketAwaitingReply( inPacketID )
