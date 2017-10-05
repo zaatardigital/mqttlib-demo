@@ -207,9 +207,9 @@ End
 		End Function
 	#tag EndEvent
 	#tag Event
-		Sub ReceivedPUBREL(inPacketID As UInt16)
+		Function ReceivedPUBREL(inPacketID As UInt16) As Boolean
 		  Self.Log "PUBREL received with packet id #" + Str( inPacketID )
-		End Sub
+		End Function
 	#tag EndEvent
 	#tag Event
 		Sub ReceivedSUBACK(inSUBACKData As MQTTLib.OptionsSUBACK)

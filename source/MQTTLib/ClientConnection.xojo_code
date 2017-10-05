@@ -494,11 +494,11 @@ Protected Class ClientConnection
 		  Self.RemovePacketAwaitingReply( thePacketID )
 		  
 		  // give the subclass the control
-		  RaiseEvent ReceivedPUBREL( thePacketID )
-		  
-		  // A PUBREL must be replied with a PUBCOMP
-		  Dim thePUBCOMP As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBCOMP, New MQTTLib.OptionsPUBCOMP( thePacketID ) )
-		  Self.SendControlPacket thePUBCOMP
+		  If Not RaiseEvent ReceivedPUBREL( thePacketID ) Then
+		    // The event's handler return false, we have to handle the response.
+		    Self.SendPUBCOMP( thePacketID )
+		    
+		  End If
 		End Sub
 	#tag EndMethod
 
@@ -815,7 +815,7 @@ Protected Class ClientConnection
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
-		Event ReceivedPUBREL(inPacketID As UInt16)
+		Event ReceivedPUBREL(inPacketID As UInt16) As Boolean
 	#tag EndHook
 
 	#tag Hook, Flags = &h0
