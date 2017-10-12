@@ -118,11 +118,8 @@ Protected Class ClientConnection
 	#tag Method, Flags = &h21
 		Private Sub HandlePINGTimedOut()
 		  //-- The last ping has timed out
-		  Static theCallCount As Integer
 		  
-		  theCallCount = theCallCount + 1
-		  If theCallCount = 2 then Break 
-		  Self.ProcessProtocolError( CurrentMethodName, Str( theCallCount ) + " - No response from the broker when pinged.", MQTTLib.Error.PINGTimedOut )
+		  Self.ProcessProtocolError( CurrentMethodName, "No response from the broker when pinged.", MQTTLib.Error.PINGTimedOut )
 		End Sub
 	#tag EndMethod
 
