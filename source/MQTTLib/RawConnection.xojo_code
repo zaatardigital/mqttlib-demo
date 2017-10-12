@@ -27,6 +27,8 @@ Protected Class RawConnection
 		Private Sub HandleSocketAdapterConnected()
 		  //-- The socket layer is connected, connect to the MQTT broker
 		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
 		  Self.pConnected = True
 		  RaiseEvent Connected
 		End Sub
@@ -154,6 +156,8 @@ Protected Class RawConnection
 		Sub JettisonSocketAdapter()
 		  //-- Unlink the socket adapter
 		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
 		  // Only if we have an existing socket adapter
 		  If Not ( Self.pSocketAdapter Is Nil ) Then
 		    // Unlink the socket adpaters delegates
@@ -169,6 +173,8 @@ Protected Class RawConnection
 	#tag Method, Flags = &h0
 		Sub Open()
 		  // Connect the socket adapter
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
 		  
 		  Self.pSocketAdapter.Connect
 		  
@@ -195,6 +201,8 @@ Protected Class RawConnection
 	#tag Method, Flags = &h0
 		Sub SendControlPacket(inPacket As MQTTLib.ControlPacket)
 		  //-- Send the packet to the broker
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
 		  
 		  // --- Check the session state ---
 		  If Not Self.Connected Then
