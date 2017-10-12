@@ -4,6 +4,8 @@ Protected Class ClientConnection
 		Private Sub ClearSession()
 		  //-- Clear the session after a disconnection
 		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
 		  Self.pConnected = False
 		  
 		  // Stop the timers
@@ -60,6 +62,8 @@ Protected Class ClientConnection
 		  //-- An easy way to connect via unsecure TCP with fewer parameters
 		  // NB: inKeepAlive is in seconds ( 0 means no keep alive mechanism ) 
 		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
 		  // Create and setup the socket
 		  Dim theSocket As New TCPSocket
 		  
@@ -84,6 +88,8 @@ Protected Class ClientConnection
 	#tag Method, Flags = &h21
 		Private Sub HandleKeepAliveTimerAction(inTimer As Xojo.Core.Timer)
 		  #pragma Unused inTimer
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
 		  
 		  // As simple as this
 		  Self.PingBroker
@@ -204,14 +210,6 @@ Protected Class ClientConnection
 		End Sub
 	#tag EndMethod
 
-	#tag Method, Flags = &h21
-		Private Sub HandleResponseTimeOut()
-		  
-		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
-		  
-		End Sub
-	#tag EndMethod
-
 	#tag Method, Flags = &h0
 		Function NewPacketID() As UInt16
 		  //-- Generate a non-zero unused packetID.
@@ -242,13 +240,13 @@ Protected Class ClientConnection
 		Sub PingBroker()
 		  //-- Send a PING to the broker.
 		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
 		  // Give Me a ping, Vassily. One ping only, please.
 		  Self.SendControlPacket( New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PINGREQ ) )
 		  
 		  // Set a delayed call for timeout
 		  Xojo.Core.Timer.CallLater( Self.pControlPacketTimeToLive * 1000, AddressOf Self.HandlePINGTimedOut )
-		  
-		  System.DebugLog CurrentMethodName
 		End Sub
 	#tag EndMethod
 
@@ -256,7 +254,7 @@ Protected Class ClientConnection
 		Private Sub ProcessCONNACK(inOptions As MQTTLib.OptionsCONNACK)
 		  //-- Process the received CONNACK control packet
 		  
-		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": Return code = " + Str( inOptions.ReturnCode )
 		  
 		  // Is the connection accepted?
 		  If inOptions.ReturnCode = MQTTLib.OptionsCONNACK.kReturnCodeConnectionAccepted Then
@@ -382,11 +380,11 @@ Protected Class ClientConnection
 		  Dim thePacketID As UInt16 = inPUBLISHData.PacketID
 		  
 		  If MQTTLib.VerboseMode Then
-		    System.DebugLog CurrentMethodName + " PUBLISH received." + EndOfLine _
-		    + "PacketID: " + Str( thePacketID ) _
+		    System.DebugLog CurrentMethodName + ":  PacketID #" + Str( thePacketID ) + EndOfLine _
 		    + "Topic: " + inPUBLISHData.TopicName + EndOfLine _
-		    + "Message: " + inPUBLISHData.Message
-		    
+		    + "Message: " + inPUBLISHData.Message + EndOfLine _
+		    + "QoS: " + MQTTLib.QoSToString( inPUBLISHData.QoSLevel )
+		     
 		  End If
 		  
 		  // Handling the response depending of the QoS
@@ -532,7 +530,22 @@ Protected Class ClientConnection
 		  // Get the packet id
 		  Dim thePacketID As UInt16 = inSUBACKData.PacketID
 		  
-		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": Received a SUBACK with packetID #" + Str( thePacketID )
+		  If MQTTLib.VerboseMode Then
+		    Dim theLines( 0 ) As String
+		    theLines( 0 ) = CurrentMethodName + ": Received a SUBACK with packetID #"  + Str( inSUBACKData.PacketID )
+		    
+		    Dim theCount As Integer = inSUBACKData.Count
+		    
+		    For i As Integer = 1 To theCount
+		      // Build the line for the i-th return  code.
+		      theLines.Append "Topic #" + Str( i, "0000" ) + " return code " + inSUBACKData.ReturnCodeString( inSUBACKData.ReturnCode( i ) )
+		      
+		    Next
+		    
+		    // Join the lines and log
+		    System.DebugLog Join( theLines, EndOfLine )
+		    
+		  End If
 		  
 		  // Check for zero packetID
 		  If thePacketID = 0 Then
@@ -575,14 +588,24 @@ Protected Class ClientConnection
 		Sub Publish(inOptions As MQTTLib.OptionsPUBLISH)
 		  //-- Send a PUBLISH control packet
 		  
-		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
-		  
 		  // Pre conditions
 		  If inOptions Is Nil Then _
 		  Raise New zd.EasyNilObjectException( CurrentMethodName, "inOptions can't be nil." )
 		  
+		  If MQTTLib.VerboseMode Then 
+		    System.DebugLog CurrentMethodName + ": PacketID #" + Str( inOptions.PacketID ) + EndOfLine _
+		    + "Topic: " + inOptions.TopicName + EndOfLine _
+		    + "Message: " + inOptions.Message + EndOfLine _
+		    + "QoS: " + MQTTLib.QoSToString( inOptions.QoSLevel )
+		    
+		  End If
+		  
 		  // If there is no packetID assigned (ie = 0 ), then set a new one
-		  If inOptions.PacketID = 0 Then inOptions.PacketID = Self.NewPacketID
+		  If inOptions.PacketID = 0 Then
+		    inOptions.PacketID = Self.NewPacketID
+		    System.DebugLog "Assigning wew PacketID #" + Str( inOptions.PacketID )  
+		    
+		  End If
 		  
 		  // Create and send the control packet
 		  Dim thePacket As New MQTTLib.ControlPacket( MQTTLib.ControlPacket.Type.PUBLISH, inOptions )
@@ -598,6 +621,9 @@ Protected Class ClientConnection
 
 	#tag Method, Flags = &h21
 		Private Sub RemovePacketAwaitingReply(inPacketID As UInt16)
+		  // Log a message if needed
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": PacketID #" + Str( inPacketID )
+		  
 		  If Self.pPacketsAwaitingReply.HasKey( inPacketID ) Then Self.pPacketsAwaitingReply.Remove( inPacketID )
 		  If Self.pPacketsAwaitingReplyTimeout.HasKey( inPacketID ) Then Self.pPacketsAwaitingReplyTimeout.Remove( inPacketID )
 		End Sub
@@ -745,6 +771,8 @@ Protected Class ClientConnection
 
 	#tag Method, Flags = &h21
 		Private Sub StorePacketAwaitingReply(inPacketID As UInt16, inControlPacket As MQTTLib.ControlPacket)
+		  // Log a message if needed
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + ": PacketID #" + Str( inPacketID )
 		  
 		  Self.pPacketsAwaitingReply.Value( inPacketID ) = inControlPacket
 		  Self.pPacketsAwaitingReplyTimeout.Value( inPacketID ) = Microseconds + Self.pControlPacketTimeToLive * 1000000
@@ -770,7 +798,7 @@ Protected Class ClientConnection
 		    
 		    For i As Integer = 1 To theCount
 		      Dim theTopic As MQTTLib.Topic = inOptions.Topic( i )
-		      theParts.Append " * " + theTopic.Name + " (" + MQTTLib.QoSToString( theTopic.RequestedQoS ) + ")"
+		      theParts.Append " #" + Str( i, "0000" ) + " - " + theTopic.Name + " (" + MQTTLib.QoSToString( theTopic.RequestedQoS ) + ")"
 		      
 		    Next
 		    
