@@ -169,7 +169,7 @@ Protected Module MQTTLib
 	#tag Constant, Name = kDefaultPortSecured, Type = Double, Dynamic = False, Default = \"8883", Scope = Protected
 	#tag EndConstant
 
-	#tag Constant, Name = LibraryVersionString, Type = String, Dynamic = False, Default = \"zdMQTTLib v1.0a11", Scope = Protected
+	#tag Constant, Name = LibraryVersionString, Type = String, Dynamic = False, Default = \"zdMQTTLib v1.0a12", Scope = Protected
 		#Tag Instance, Platform = Any, Language = Default, Definition  = \""
 	#tag EndConstant
 
