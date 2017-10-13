@@ -58,7 +58,7 @@ Protected Class ClientConnection
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Function EasyPublish(inTopicName As String, inMessage As String, inQoSLevel As MQTTLib.QoS, inREATINFlag As Boolean = False) As UInt16
+		Function EasyPublish(inTopicName As String, inMessage As String, inQoSLevel As MQTTLib.QoS, inRETAINFlag As Boolean = False) As UInt16
 		  //-- PUBLISH the data passed as parameters and returns the packet id
 		  
 		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
@@ -68,7 +68,7 @@ Protected Class ClientConnection
 		  theOptions.TopicName = inTopicName
 		  theOptions.Message = inMessage
 		  theOptions.QoSLevel = inQoSLevel
-		  theOptions.RETAINFlag = inRetain
+		  theOptions.RETAINFlag = inRETAINFlag
 		  
 		  // Publish the packet
 		  Self.Publish theOptions
@@ -622,9 +622,9 @@ Protected Class ClientConnection
 		  End If
 		  
 		  // If there is no packetID assigned (ie = 0 ), then set a new one
-		  If inOptions.PacketID = 0 Then
+		  If inOptions.PacketID = 0 And inOptions.QoSLevel <> MQTTLib.QoS.AtMostOnceDelivery Then
 		    inOptions.PacketID = Self.NewPacketID
-		    System.DebugLog "Assigning wew PacketID #" + Str( inOptions.PacketID )  
+		    System.DebugLog "Assigning new PacketID #" + Str( inOptions.PacketID )  
 		    
 		  End If
 		  
@@ -652,7 +652,7 @@ Protected Class ClientConnection
 		  theOptions.TopicName = inTopicName
 		  theOptions.Message = inMessage
 		  theOptions.QoSLevel = MQTTLib.QoS.AtMostOnceDelivery
-		  theOptions.RETAINFlag = inRetain
+		  theOptions.RETAINFlag = inRETAINFlag
 		  
 		  // Publish the packet
 		  Self.Publish theOptions
