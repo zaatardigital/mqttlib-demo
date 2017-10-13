@@ -384,7 +384,7 @@ Protected Class ClientConnection
 		    + "Topic: " + inPUBLISHData.TopicName + EndOfLine _
 		    + "Message: " + inPUBLISHData.Message + EndOfLine _
 		    + "QoS: " + MQTTLib.QoSToString( inPUBLISHData.QoSLevel )
-		     
+		    
 		  End If
 		  
 		  // Handling the response depending of the QoS
