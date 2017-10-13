@@ -640,6 +640,25 @@ Protected Class ClientConnection
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Sub QuickPublish(inTopicName As String, inMessage As String, inRETAINFlag As Boolean = False)
+		  //-- PUBLISH with just a topic and name with the QoS = At Most Once delivery
+		  // Setting the RETAIN flag is optional
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
+		  // Create and setup a PUBLISH control packet
+		  Dim theOptions As New MQTTLib.OptionsPUBLISH
+		  theOptions.TopicName = inTopicName
+		  theOptions.Message = inMessage
+		  theOptions.QoSLevel = MQTTLib.QoS.AtMostOnceDelivery
+		  theOptions.RETAINFlag = inRetain
+		  
+		  // Publish the packet
+		  Self.Publish theOptions
+		End Sub
+	#tag EndMethod
+
 	#tag Method, Flags = &h21
 		Private Sub RemovePacketAwaitingReply(inPacketID As UInt16)
 		  // Log a message if needed
