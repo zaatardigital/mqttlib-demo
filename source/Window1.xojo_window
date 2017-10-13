@@ -164,7 +164,11 @@ End
 		  theConnectOptions.PasswordFlag = False
 		  theConnectOptions.CleanSessionFlag = True
 		  theConnectOptions.UsernameFlag = False
-		  theConnectOptions.WillFlag = False
+		  
+		  theConnectOptions.WillFlag = True
+		  theConnectOptions.WillTopic = "test/zd/world"
+		  theConnectOptions.WillMessage = "MQTTLib was here!"
+		  theConnectOptions.WillQoS = MQTTLib.QoS.AtLeastOnceDelivery
 		  
 		  Me.MQTTClient.Setup New MQTTLib.TCPSocketAdapter( theSocket ), theConnectOptions
 		  Me.MQTTClient.Connect
