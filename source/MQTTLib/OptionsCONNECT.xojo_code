@@ -21,7 +21,7 @@ Implements ControlPacketOptions
 		  theParts.Append ChrB( If( UsernameFlag, zd.Utils.Bits.kValueBit7, 0 ) _
 		  + If( PasswordFlag, zd.Utils.Bits.kValueBit6, 0 ) _
 		  + If( WillRetainFlag, zd.Utils.Bits.kValueBit5, 0 ) _
-		  + ( WillQoS Mod zd.Utils.Bits.kValueBit2 ) * zd.Utils.Bits.kValueBit3 _
+		  + ( Integer( WillQoS ) Mod zd.Utils.Bits.kValueBit2 ) * zd.Utils.Bits.kValueBit3 _
 		  + If( WillFlag, zd.Utils.Bits.kValueBit2, 0 ) _
 		  + If( CleanSessionFlag, zd.Utils.Bits.kValueBit1, 0 ) )
 		  
@@ -144,7 +144,7 @@ Implements ControlPacketOptions
 	#tag EndProperty
 
 	#tag Property, Flags = &h0
-		WillQoS As UInt8
+		WillQoS As MQTTLib.QoS
 	#tag EndProperty
 
 	#tag Property, Flags = &h0
