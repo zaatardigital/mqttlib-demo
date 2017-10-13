@@ -58,6 +58,27 @@ Protected Class ClientConnection
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Function EasyPublish(inTopicName As String, inMessage As String, inQoSLevel As MQTTLib.QoS, inREATINFlag As Boolean = False) As UInt16
+		  //-- PUBLISH the data passed as parameters and returns the packet id
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
+		  // Create and setup a PUBLISH control packet
+		  Dim theOptions As New MQTTLib.OptionsPUBLISH
+		  theOptions.TopicName = inTopicName
+		  theOptions.Message = inMessage
+		  theOptions.QoSLevel = inQoSLevel
+		  theOptions.RETAINFlag = inRetain
+		  
+		  // Publish the packet
+		  Self.Publish theOptions
+		  
+		  // Return the packet ID
+		  Return theOptions.PacketID
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub EasyTCPConnect(inHost As String, inPort As Integer, inClientID As String, inCleanSession As Boolean, inKeepAlive As UInt16)
 		  //-- An easy way to connect via unsecure TCP with fewer parameters
 		  // NB: inKeepAlive is in seconds ( 0 means no keep alive mechanism ) 
