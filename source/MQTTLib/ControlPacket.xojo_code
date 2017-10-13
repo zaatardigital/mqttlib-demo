@@ -15,6 +15,8 @@ Implements zd.Utils.DataStructures.PushableItem
 		  
 		  Const kFlagsMask = &b00001111
 		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName + " inTypeAndFlags = &h" + Hex( inTypeAndFlags )
+		  
 		  // Extract and set the packet type and prepare the data
 		  Dim thePacketType As Integer = inTypeAndFlags \ zd.Utils.Bits.kValueBit4
 		  

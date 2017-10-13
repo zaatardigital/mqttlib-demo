@@ -8,6 +8,14 @@ Implements ControlPacketOptions
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Function Count() As Integer
+		  //-- Returns the number of return codes
+		  
+		  Return Self.pReturnCodes.Ubound + 1
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Function GetFixedHeaderFlagBits() As UInt8
 		  Return &b0000
 		End Function
@@ -98,16 +106,38 @@ Implements ControlPacketOptions
 		Function ReturnCode(inIndex As Integer) As MQTTLib.OptionsSUBACK.ReturnCodes
 		  //-- Return the return code for inIndex
 		  
-		  If inIndex < 0 Or inIndex > Self.pReturnCodes.UBound Then
+		  If inIndex < 1 Or inIndex > Self.Count Then
 		    // inIndex is out of bounds so raise a well documented exception
 		    Raise New zd.EasyOutOfBoundsException( CurrentMethodName, _
-		    "inIndex " + Str( inIndex ) + " is out of the bounds for pReturnCodes (0-" + Str( Self.pReturnCodes.Ubound ) + ")." )
+		    "inIndex " + Str( inIndex ) + " is out of the bounds for pReturnCodes (1-" + Str( Self.Count ) + ")." )
 		    
 		  Else
 		    // Get and return the value
-		    Return Self.pReturnCodes( inIndex )
+		    Return Self.pReturnCodes( inIndex - 1 )
 		    
 		  End If
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Shared Function ReturnCodeString(inReturnCode As MQTTLib.OptionsSUBACK.ReturnCodes) As String
+		  //-- Return a human readable string for a SUBACK return code
+		  
+		  Select Case inReturnCode
+		    
+		  Case MQTTLib.OptionsSUBACK.ReturnCodes.SuccessMaxQoSAtMostOnce
+		    Return "SuccessMaxQoSAtMostOnce"
+		    
+		  Case MQTTLib.OptionsSUBACK.ReturnCodes.SuccessMaxQoSAtLeastOnce
+		    Return "SuccessMaxQoSAtLeastOnce"
+		    
+		  Case MQTTLib.OptionsSUBACK.ReturnCodes.SuccessMaxQoSExactlyOnce
+		    Return "SuccessMaxQoSExactlyOnce"
+		    
+		  Case MQTTLib.OptionsSUBACK.ReturnCodes.Failure
+		    Return "Failure"
+		    
+		  End Select
 		End Function
 	#tag EndMethod
 

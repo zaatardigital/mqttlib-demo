@@ -27,6 +27,8 @@ Protected Class RawConnection
 		Private Sub HandleSocketAdapterConnected()
 		  //-- The socket layer is connected, connect to the MQTT broker
 		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
 		  Self.pConnected = True
 		  RaiseEvent Connected
 		End Sub
@@ -58,9 +60,9 @@ Protected Class RawConnection
 		  // Assemble the remaining and the new data and cast the result to a MemoryBlock
 		  Dim theRawData As MemoryBlock = Self.pDataRemainder + inNewData
 		  
-		  // This is the endless loop to process the raw data until there is no more complete packets
-		  // There are exit conditions when no more data are avalaible or they are incomplete 
 		  Do
+		    // This is the endless loop to process the raw data until there is no more complete packets
+		    // There are exit conditions when no more data are avalaible or they are incomplete
 		    
 		    // A packet should at least be 2 bytes long 
 		    If theRawData.Size < 2 Then
@@ -104,7 +106,7 @@ Protected Class RawConnection
 		      
 		      theMultiplier = theMultiplier * zd.Utils.Bits.kValueBit7
 		      
-		    Loop Until ( theByte And zd.Utils.Bits.kValueBit7 ) = 0 
+		    Loop Until ( theByte And zd.Utils.Bits.kValueBit7 ) = 0
 		    
 		    // ---- Calculate and check the block size needed to get a complete packet ----
 		    
@@ -112,7 +114,7 @@ Protected Class RawConnection
 		    If thePacketSize > theRawData.Size Then
 		      // The data are incomplete
 		      Self.pDataRemainder = theRawData
-		      Return
+		      Exit Do
 		      
 		    End If
 		    
@@ -132,19 +134,17 @@ Protected Class RawConnection
 		      
 		    End Try
 		    
-		    // Extract and store the remaining data if needed
-		    If theRawData.Size < thePacketSize Then
-		      Self.pDataRemainder = theRawData.RightB( theRawData.Size - thePacketSize )
+		    // Do we have a data remainder?
+		    If theRawData.Size > thePacketSize Then
+		      // Let's store it for further process
+		      theRawdata = theRawData.RightB( theRawData.Size - thePacketSize )
 		      
 		    Else
-		      // No data remaining
+		      // No more data to process
 		      Self.pDataRemainder = ""
-		      Return
+		      Exit Do
 		      
 		    End If
-		    
-		    // Let's go for another round
-		    theRawData = Self.pDataRemainder
 		    
 		  Loop
 		End Sub
@@ -153,6 +153,8 @@ Protected Class RawConnection
 	#tag Method, Flags = &h0
 		Sub JettisonSocketAdapter()
 		  //-- Unlink the socket adapter
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
 		  
 		  // Only if we have an existing socket adapter
 		  If Not ( Self.pSocketAdapter Is Nil ) Then
@@ -169,6 +171,8 @@ Protected Class RawConnection
 	#tag Method, Flags = &h0
 		Sub Open()
 		  // Connect the socket adapter
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
 		  
 		  Self.pSocketAdapter.Connect
 		  
@@ -195,6 +199,8 @@ Protected Class RawConnection
 	#tag Method, Flags = &h0
 		Sub SendControlPacket(inPacket As MQTTLib.ControlPacket)
 		  //-- Send the packet to the broker
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
 		  
 		  // --- Check the session state ---
 		  If Not Self.Connected Then

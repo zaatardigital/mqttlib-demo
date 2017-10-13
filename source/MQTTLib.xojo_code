@@ -104,14 +104,14 @@ Protected Module MQTTLib
 		  
 		  Select Case inQoS
 		    
-		  Case MQTTLib.QoS.AtMostOnceDelivery // QoS = 0
-		    Return "MQTTLib.QoS.AtMostOnceDelivery" // QoS = 1
+		  Case MQTTLib.QoS.AtMostOnceDelivery
+		    Return "At Most Once Delivery"
 		    
 		  Case MQTTLib.QoS.AtLeastOnceDelivery
-		    Return "MQTTLib.QoS.AtLeastOnceDelivery" // QoS = 2
+		    Return "At Least Once Delivery"
 		    
 		  Case MQTTLib.QoS.ExactlyOnceDelivery
-		    Return "MQTTLib.QoS.ExactlyOnceDelivery" // QoS = 3
+		    Return "Exactly Once Delivery"
 		    
 		  Else
 		    Raise New zd.EasyException( CurrentMethodName, "Unimplemented case #" + Str( Integer ( inQoS ) ) + " for MQTTLib.QoS enumeration." )
@@ -169,7 +169,7 @@ Protected Module MQTTLib
 	#tag Constant, Name = kDefaultPortSecured, Type = Double, Dynamic = False, Default = \"8883", Scope = Protected
 	#tag EndConstant
 
-	#tag Constant, Name = LibraryVersionString, Type = String, Dynamic = False, Default = \"zdMQTTLib v1.0a10", Scope = Protected
+	#tag Constant, Name = LibraryVersionString, Type = String, Dynamic = False, Default = \"zdMQTTLib v1.0a11", Scope = Protected
 		#Tag Instance, Platform = Any, Language = Default, Definition  = \""
 	#tag EndConstant
 

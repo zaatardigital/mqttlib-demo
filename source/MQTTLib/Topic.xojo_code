@@ -2,7 +2,8 @@
 Protected Class Topic
 	#tag Method, Flags = &h0
 		Sub Constructor(inName As String, inRequestedQoS As MQTTLib.QoS)
-		  pName = inName
+		  // Topic names must be UTF-8
+		  pName = ConvertEncoding( inName, Encodings.UTF8 )
 		  pRequestedQoS = inRequestedQoS
 		End Sub
 	#tag EndMethod
