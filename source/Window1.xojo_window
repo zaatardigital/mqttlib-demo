@@ -116,8 +116,8 @@ Begin Window Window1
       Bold            =   False
       ButtonStyle     =   "0"
       Cancel          =   False
-      Caption         =   "OK"
-      Default         =   True
+      Caption         =   "Publish"
+      Default         =   False
       Enabled         =   True
       Height          =   20
       HelpTag         =   ""
