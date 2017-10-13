@@ -80,7 +80,7 @@ Begin Window Window1
       Visible         =   True
       Width           =   560
    End
-   Begin PushButton PushButton1
+   Begin PushButton DisconnectButton
       AutoDeactivate  =   True
       Bold            =   False
       ButtonStyle     =   "0"
@@ -101,6 +101,37 @@ Begin Window Window1
       LockTop         =   False
       Scope           =   0
       TabIndex        =   1
+      TabPanelIndex   =   0
+      TabStop         =   True
+      TextFont        =   "SmallSystem"
+      TextSize        =   0.0
+      TextUnit        =   0
+      Top             =   382
+      Underline       =   False
+      Visible         =   True
+      Width           =   80
+   End
+   Begin PushButton SendButton
+      AutoDeactivate  =   True
+      Bold            =   False
+      ButtonStyle     =   "0"
+      Cancel          =   False
+      Caption         =   "Publish"
+      Default         =   False
+      Enabled         =   True
+      Height          =   20
+      HelpTag         =   ""
+      Index           =   -2147483648
+      InitialParent   =   ""
+      Italic          =   False
+      Left            =   20
+      LockBottom      =   True
+      LockedInPosition=   False
+      LockLeft        =   True
+      LockRight       =   False
+      LockTop         =   False
+      Scope           =   0
+      TabIndex        =   2
       TabPanelIndex   =   0
       TabStop         =   True
       TextFont        =   "SmallSystem"
@@ -148,10 +179,12 @@ End
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
-		Private Sub SendMessage()
+		Private Sub SubscribeTopics()
 		  Dim theOptions As New MQTTLib.OptionsSUBSCRIBE
 		  
 		  theOptions.AddTopic "$SYS/broker/messages/#", MQTTLib.QoS.ExactlyOnceDelivery
+		  theOptions.AddTopic "test/#", MQTTLib.QoS.ExactlyOnceDelivery
+		  theOptions.AddTopic "test/zd/world", MQTTLib.QoS.ExactlyOnceDelivery
 		  
 		  Self.MQTTClient.Subscribe theOptions
 		  
@@ -191,9 +224,7 @@ End
 		Sub BrokerConnected(inSessionPresentFlag As Boolean)
 		  Self.Log "Connected to Broker. Session Present flag is " + If( inSessionPresentFlag, "True", "False" )
 		  
-		  ' Timer1.Mode = Xojo.Core.Timer.Modes.Multiple
-		  
-		  Xojo.Core.Timer.CallLater 1000, AddressOf Self.SendMessage
+		  Xojo.Core.Timer.CallLater 1000, AddressOf Self.SubscribeTopics
 		End Sub
 	#tag EndEvent
 	#tag Event
@@ -203,7 +234,7 @@ End
 	#tag EndEvent
 	#tag Event
 		Sub Error(inMessage As String, inError As MQTTLib.Error)
-		  
+		  Self.Log inMessage + " !!! Connection closed !!!"
 		End Sub
 	#tag EndEvent
 	#tag Event
@@ -223,7 +254,9 @@ End
 	#tag EndEvent
 	#tag Event
 		Function ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH) As Boolean
-		  Self.Log "PUBLISH received with packet id #" + Str( inPublish.PacketID )
+		  Self.Log "PUBLISH received #" + Str( inPublish.PacketID ) + " & QoS:" + MQTTLib.QoSToString( inPublish.QoSLevel ) + EndOfLine _
+		  + "Topic: " + inPublish.TopicName + EndOfLine + "Message: " + inPublish.Message + EndOfLine
+		  
 		End Function
 	#tag EndEvent
 	#tag Event
@@ -242,10 +275,26 @@ End
 		End Sub
 	#tag EndEvent
 #tag EndEvents
-#tag Events PushButton1
+#tag Events DisconnectButton
 	#tag Event
 		Sub Action()
 		  Self.MQTTClient.Disconnect
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+#tag Events SendButton
+	#tag Event
+		Sub Action()
+		  // Send a hello world message
+		  
+		  Dim thePacket As New MQTTLib.OptionsPUBLISH
+		  
+		  thePacket.TopicName = "test/zd/world"
+		  thePacket.QoSLevel = MQTTLib.QoS.AtLeastOnceDelivery
+		  thePacket.Message = "Hello World! " + Xojo.Core.Date.Now.ToText + " - " + MQTTLib.QoSToString( thePacket.QoSLevel )
+		  thePacket.RETAINFlag = True
+		  
+		  Self.MQTTClient.Publish( thePacket )
 		End Sub
 	#tag EndEvent
 #tag EndEvents

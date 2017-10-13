@@ -119,7 +119,6 @@ Implements SocketAdapter
 		  // Part of the MQTTLib.SocketAdapter interface
 		  
 		  pTCPSocket.Write inControPacket.RawData
-		  pTCPSocket.Flush
 		End Sub
 	#tag EndMethod
 

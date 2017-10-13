@@ -82,7 +82,7 @@ Implements ControlPacketOptions
 		  Dim theTopicLength As UInt16 = inRawData.UInt16Value( theOffset )
 		  theOffset = theOffset + kUInt16BytesSize
 		  
-		  Self.TopicName = inRawData.StringValue( theOffset, theTopicLength )
+		  Self.TopicName = DefineEncoding( inRawData.StringValue( theOffset, theTopicLength ), Encodings.UTF8 )
 		  theOffset = theOffset + theTopicLength
 		  
 		  // -- Read the packet ID if there is one --
@@ -96,7 +96,7 @@ Implements ControlPacketOptions
 		  // -- Read the message --
 		  
 		  Dim theMessageLength As Integer = inRawData.Size - theOffset
-		  Self.Message = inRawData.StringValue( theOffset, theMessageLength )
+		  Self.Message = DefineEncoding( inRawData.StringValue( theOffset, theMessageLength ), Encodings.UTF8 )
 		End Sub
 	#tag EndMethod
 
