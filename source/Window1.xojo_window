@@ -254,7 +254,7 @@ End
 	#tag EndEvent
 	#tag Event
 		Function ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH) As Boolean
-		  Self.Log "-- PUBLISH received #" + Str( inPublish.PacketID ) + " & QoS:" + MQTTLib.QoSToString( inPublish.QoSLevel ) + EndOfLine _
+		  Self.Log "PUBLISH received #" + Str( inPublish.PacketID ) + " & QoS:" + MQTTLib.QoSToString( inPublish.QoSLevel ) + EndOfLine _
 		  + "Topic: " + inPublish.TopicName + EndOfLine + "Message: " + inPublish.Message + EndOfLine
 		  
 		End Function
