@@ -104,14 +104,14 @@ Protected Module MQTTLib
 		  
 		  Select Case inQoS
 		    
-		  Case MQTTLib.QoS.AtMostOnceDelivery // QoS = 0
-		    Return "MQTTLib.QoS.AtMostOnceDelivery" // QoS = 1
+		  Case MQTTLib.QoS.AtMostOnceDelivery
+		    Return "At Most Once Delivery"
 		    
 		  Case MQTTLib.QoS.AtLeastOnceDelivery
-		    Return "MQTTLib.QoS.AtLeastOnceDelivery" // QoS = 2
+		    Return "At Least Once Delivery"
 		    
 		  Case MQTTLib.QoS.ExactlyOnceDelivery
-		    Return "MQTTLib.QoS.ExactlyOnceDelivery" // QoS = 3
+		    Return "Exactly Once Delivery"
 		    
 		  Else
 		    Raise New zd.EasyException( CurrentMethodName, "Unimplemented case #" + Str( Integer ( inQoS ) ) + " for MQTTLib.QoS enumeration." )
