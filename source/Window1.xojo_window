@@ -116,8 +116,8 @@ Begin Window Window1
       Bold            =   False
       ButtonStyle     =   "0"
       Cancel          =   False
-      Caption         =   "OK"
-      Default         =   True
+      Caption         =   "Publish"
+      Default         =   False
       Enabled         =   True
       Height          =   20
       HelpTag         =   ""
@@ -254,7 +254,7 @@ End
 	#tag EndEvent
 	#tag Event
 		Function ReceivedPUBLISH(inPublish As MQTTLib.OptionsPUBLISH) As Boolean
-		  Self.Log "-- PUBLISH received #" + Str( inPublish.PacketID ) + " & QoS:" + MQTTLib.QoSToString( inPublish.QoSLevel ) + EndOfLine _
+		  Self.Log "PUBLISH received #" + Str( inPublish.PacketID ) + " & QoS:" + MQTTLib.QoSToString( inPublish.QoSLevel ) + EndOfLine _
 		  + "Topic: " + inPublish.TopicName + EndOfLine + "Message: " + inPublish.Message + EndOfLine
 		  
 		End Function
