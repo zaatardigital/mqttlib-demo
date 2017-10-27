@@ -58,6 +58,27 @@ Protected Class ClientConnection
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
+		Function EasyPublish(inTopicName As String, inMessage As String, inQoSLevel As MQTTLib.QoS, inRETAINFlag As Boolean = False) As UInt16
+		  //-- PUBLISH the data passed as parameters and returns the packet id
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
+		  // Create and setup a PUBLISH control packet
+		  Dim theOptions As New MQTTLib.OptionsPUBLISH
+		  theOptions.TopicName = inTopicName
+		  theOptions.Message = inMessage
+		  theOptions.QoSLevel = inQoSLevel
+		  theOptions.RETAINFlag = inRETAINFlag
+		  
+		  // Publish the packet
+		  Self.Publish theOptions
+		  
+		  // Return the packet ID
+		  Return theOptions.PacketID
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
 		Sub EasyTCPConnect(inHost As String, inPort As Integer, inClientID As String, inCleanSession As Boolean, inKeepAlive As UInt16)
 		  //-- An easy way to connect via unsecure TCP with fewer parameters
 		  // NB: inKeepAlive is in seconds ( 0 means no keep alive mechanism ) 
@@ -601,9 +622,9 @@ Protected Class ClientConnection
 		  End If
 		  
 		  // If there is no packetID assigned (ie = 0 ), then set a new one
-		  If inOptions.PacketID = 0 Then
+		  If inOptions.PacketID = 0 And inOptions.QoSLevel <> MQTTLib.QoS.AtMostOnceDelivery Then
 		    inOptions.PacketID = Self.NewPacketID
-		    System.DebugLog "Assigning wew PacketID #" + Str( inOptions.PacketID )  
+		    System.DebugLog "Assigning new PacketID #" + Str( inOptions.PacketID )  
 		    
 		  End If
 		  
@@ -616,6 +637,25 @@ Protected Class ClientConnection
 		    Self.StorePacketAwaitingReply( inOptions.PacketID, thePacket )
 		    
 		  End If
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub QuickPublish(inTopicName As String, inMessage As String, inRETAINFlag As Boolean = False)
+		  //-- PUBLISH with just a topic and name with the QoS = At Most Once delivery
+		  // Setting the RETAIN flag is optional
+		  
+		  If MQTTLib.VerboseMode Then System.DebugLog CurrentMethodName
+		  
+		  // Create and setup a PUBLISH control packet
+		  Dim theOptions As New MQTTLib.OptionsPUBLISH
+		  theOptions.TopicName = inTopicName
+		  theOptions.Message = inMessage
+		  theOptions.QoSLevel = MQTTLib.QoS.AtMostOnceDelivery
+		  theOptions.RETAINFlag = inRETAINFlag
+		  
+		  // Publish the packet
+		  Self.Publish theOptions
 		End Sub
 	#tag EndMethod
 
