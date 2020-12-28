@@ -1,6 +1,6 @@
 ## MQTTLib For Xojo.
 
-__MQTTLib__ is a library written in [Xojo](http://xojo.com) for implementing the [MQTT Protocol](https://en.wikipedia.org/wiki/MQTT) in a nice way in your own projects. It comes as a module containing the classes, interfaces and other stuff.
+__MQTTLib__ is a library written in [Xojo](http://xojo.com) to implement the [MQTT Protocol](https://en.wikipedia.org/wiki/MQTT) in a nice way in your own projects. It comes as a module containing the classes, interfaces and other stuff.
 
  * For now, it handles the TCP connection only.
  * Although it hasn't been seriously tested yet, it should also work with the __[SSLSocket](https://docs.xojo.com/index.php/SSLSocket)__ class if you provide a correctly setup instance to the __TCPSocketAdapter__ class's constructor. __The SSLSocket__ inherits from the __[TCPSocket](https://docs.xojo.com/index.php/TCPSocket)__ and __TCPSocketAdapter__ only use methods and events from __TCPSockets__.
